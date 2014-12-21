@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
 # 2.7
-#fettser.yury
+# fettser.yury
 import pygame, menu
 
 pygame.init()

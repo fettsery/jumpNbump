@@ -4,18 +4,18 @@
 # fettser.yury
 import game, pygame, threading
 
+
 class Player:
-    def __init__(self, screen, num, image, sprites, players, conn = False):
+    def __init__(self, screen, num, image, sprites, players, conn):
         self.conn = conn
-        if conn:
-            self.t = threading.Thread(target = self.connection, args = (self,))
-            self.t.daemon = True
+        if num != 0:
+            self.t = threading.Thread(target=self.connection, args=(self,))
             self.t.start()
         self.screen = screen
         self.players = players
         self.sprites = sprites
         self.imagel = game.load_image(image)
-        self.imager = game.load_image("zn2r.png")
+        self.imager = game.load_image("data/zn2r.png")
         self.image = self.imager
         self.num = num
         self.posx = 20
@@ -31,7 +31,7 @@ class Player:
     def draw(self):
         self.screen.blit(self.image, (self.posx, self.posy - 30))
 
-    def move(self, action) :
+    def move(self, action):
         if action == "right":
             self.dx += 3
             self.image = self.imager
@@ -110,17 +110,13 @@ class Player:
             self.jump_acceleration = 0.6
 
     def kill(self):
-        self.image = game.load_image("dead.png")
+        self.image = game.load_image("data/dead.png")
         self.jump_speed = 5
         self.died = True
 
-class Level:
-    def __init__(self):
-        pass
-
 
 class Platform:
-    def __init__(self, screen, image, posx, posy, len, high, kills = False):
+    def __init__(self, screen, image, posx, posy, len, high, kills=False):
         self.kills = kills
         self.len = len
         self.high = high
