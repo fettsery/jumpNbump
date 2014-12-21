@@ -12,8 +12,8 @@ def Fullscreen(screen):
     screen = pygame.display.set_mode((640, 480), pygame.FULLSCREEN)
 def Normalscreen(screen):
     screen = pygame.display.set_mode((640, 480))
-def Connect():
-    pass
+def Connect(screen):
+    game.Game(screen, False)
 
 class MenuO(object):
     def __init__(self, screen):
@@ -102,7 +102,7 @@ class MainMenu:
                     if self.option == 0 and self.options[0] == "FULLSCREEN":
                         Fullscreen(self.screen)
                     if self.option == 1 and self.options[1] == "CONNECT":
-                        Connect()
+                        Connect(self.screen)
                     if self.option == 2 and self.options[2] == "OPTIONS":
                         MenuO(self.screen)
                     if self.option == 1 and self.options[1] == "WINDOWED MODE":

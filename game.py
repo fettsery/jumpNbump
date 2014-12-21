@@ -2,7 +2,7 @@
 # coding=utf-8
 # 2.7
 #fettser.yury
-import pygame, os
+import pygame, os, sys, socket
 from sprites import *
 
 def load_image(filename):
@@ -15,73 +15,152 @@ def load_image(filename):
     return image.convert_alpha()
 
 class Game(object):
-    def __init__(self, screen):
+    def __init__(self, screen, server = True):
+        self.server = server
+        self.connected = False
+        self.getconnections = True
+        if server == True:
+            self.sock = socket.socket()
+            self.sock.bind(('', 9092))
+            self.sock.listen(7)
+        if server == False:
+            self.sock = socket.socket()
+            self.sock.connect(('localhost', 9092))
+        self.objects = list()
+        self.players = list()
         self.screen = screen
         self.create_level()
-        self.Player = Player(0)
+        self.Player = Player(screen, 0, "zn2.png", self.objects, self.players)
         self.clock = pygame.time.Clock()
         self.bg = load_image("background.png")
         self.level = Level()
-        self.font = pygame.font.Font(os.path.realpath("fonts/font.ttf"), 16)
+        self.font = pygame.font.Font(os.path.realpath("fonts/font.ttf"), 10)
         self.running = True
         self.main_loop()
+
+    def connection(self, some):
+        i = 1
+        while self.getconnections:
+            conn, addr = self.sock.accept()
+            self.players.append(Player(self.screen, i, "zn2.png", self.objects, self.players, conn))
+            i += 1
+    def getdata(self, some):
+        while True:
+            data = self.sock.recv(1024)
+            if data:
+                try:
+                    player = self.players[int(data)]
+                except:
+                    self.players.append(Player(self.screen, int(data), "zn2.png", self.objects, self.players))
+                    player = self.players[int(data)]
+                data = self.sock.recv(1024)
+                player.move(data)
+
+    def send_info(self, action):
+        if self.server == False:
+            self.sock.send(action)
+        if self.server == True:
+            for i in self.players:
+                i.conn.send("0")
+                i.conn.send(action)
     def main_loop(self):
         while self.running:
+            if self.server == True and self.connected == False:
+                self.t = threading.Thread(target = self.connection, args = (self,))
+                self.t.Daemon = True
+                self.t.start()
+                self.connected = True
+            if self.server == False and self.connected == False:
+                self.t = threading.Thread(target = self.getdata, args = (self,))
+                self.t.Daemon = True
+                self.t.start()
+                self.connected = True
             self.clock.tick(30)
             self.draw()
             pygame.display.flip()
+            self.Player.update()
+            for i in self.players:
+                i.update()
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    sys.exit()
+                if e.type == pygame.KEYDOWN:
+                    if e.key == pygame.K_ESCAPE:
+                        self.getconnections = False
+                        sys.exit()
+                    if e.key == pygame.K_RIGHT:
+                        self.send_info("right")
+                        self.Player.move("right")
+                    if e.key == pygame.K_LEFT:
+                        self.send_info("left")
+                        self.Player.move("left")
+                    if e.key == pygame.K_SPACE:
+                        self.send_info("space")
+                        self.Player.move("space")
+                if e.type == pygame.KEYUP:
+                    if e.key == pygame.K_RIGHT:
+                        self.send_info("rightup")
+                        self.Player.move("rightup")
+                    if e.key == pygame.K_LEFT:
+                        self.send_info("leftup")
+                        self.Player.move("leftup")
+
     def create_level(self):
-        self.objects = list()
-        self.objects.append(Platform(self.screen, "bush-2.png", 0, 450))
-        self.objects.append(Platform(self.screen, "bush-3.png", 50, 450))
-        self.objects.append(Platform(self.screen, "bush-3.png", 100, 450))
-        self.objects.append(Platform(self.screen, "lava.png", 160, 460))
-        self.objects.append(Platform(self.screen, "lava.png", 200, 460))
-        self.objects.append(Platform(self.screen, "lava.png", 240, 460))
-        self.objects.append(Platform(self.screen, "bush-2.png", 270, 450))
-        self.objects.append(Platform(self.screen, "bush-2.png", 340, 450))
-        self.objects.append(Platform(self.screen, "bush-3.png", 400, 450))
-        self.objects.append(Platform(self.screen, "lava.png", 460, 460))
-        self.objects.append(Platform(self.screen, "lava.png", 500, 460))
-        self.objects.append(Platform(self.screen, "bush-2.png", 560, 450))
-        self.objects.append(Platform(self.screen, "brick1.png", 160, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 190, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 220, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 430, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 460, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 490, 360))
-        self.objects.append(Platform(self.screen, "brick1.png", 520, 360))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 260, 280))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 290, 280))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 320, 280))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 520, 280))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 550, 280))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 580, 280))
-        self.objects.append(Platform(self.screen, "brick1.png", 0, 280))
-        self.objects.append(Platform(self.screen, "brick1.png", 30, 280))
-        self.objects.append(Platform(self.screen, "brick1.png", 60, 280))
-        self.objects.append(Platform(self.screen, "brick1.png", 90, 280))
-        self.objects.append(Platform(self.screen, "brick1.png", 60, 180))
-        self.objects.append(Platform(self.screen, "brick1.png", 90, 180))
-        self.objects.append(Platform(self.screen, "brick1.png", 120, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 320, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 350, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 380, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 410, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 440, 180))
-        self.objects.append(Platform(self.screen, "brickblue1.png", 470, 180))
-        self.objects.append(Platform(self.screen, "cloud.png", 50, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 90, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 120, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 160, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 200, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 240, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 400, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 440, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 480, 50))
-        self.objects.append(Platform(self.screen, "cloud.png", 520, 50))
+        self.objects.append(Platform(self.screen, "bush-2.png", 0, 450, 50, 25))
+        self.objects.append(Platform(self.screen, "bush-3.png", 50, 450, 50, 25))
+        self.objects.append(Platform(self.screen, "bush-3.png", 100, 450, 60, 25))
+        self.objects.append(Platform(self.screen, "lava.png", 160, 460, 40, 25, True))
+        self.objects.append(Platform(self.screen, "lava.png", 200, 460, 40, 25, True))
+        self.objects.append(Platform(self.screen, "lava.png", 240, 460, 40, 25, True))
+        self.objects.append(Platform(self.screen, "bush-2.png", 270, 450, 70, 25))
+        self.objects.append(Platform(self.screen, "bush-2.png", 340, 450, 60, 25))
+        self.objects.append(Platform(self.screen, "bush-3.png", 400, 450, 60, 25))
+        self.objects.append(Platform(self.screen, "lava.png", 460, 460,40, 25, True))
+        self.objects.append(Platform(self.screen, "lava.png", 500, 460, 60, 25, True))
+        self.objects.append(Platform(self.screen, "bush-2.png", 560, 450, 50, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 160, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 190, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 220, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 430, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 460, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 490, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 520, 360, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 260, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 290, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 320, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 520, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 550, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 580, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 0, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 30, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 60, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 90, 280, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 60, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 90, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brick1.png", 120, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 320, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 350, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 380, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 410, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 440, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "brickblue1.png", 470, 180, 30, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 50, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 90, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 120, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 160, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 200, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 240, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 400, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 440, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 480, 50, 0, 25))
+        self.objects.append(Platform(self.screen, "cloud.png", 520, 50, 0, 25))
     def draw(self):
         self.screen.blit(self.bg, (0, 0))
         for i in self.objects:
             i.draw()
+        self.Player.draw()
+        for i in self.players:
+            i.draw()
+
+
 
