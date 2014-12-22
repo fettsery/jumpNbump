@@ -5,7 +5,6 @@
 import pygame, os, sys, socket, threading
 from sprites import *
 
-
 def load_image(filename):
     filename = os.path.realpath(filename)
     try:
@@ -13,7 +12,7 @@ def load_image(filename):
         image = pygame.transform.scale(image, \
                                        (image.get_width() * 2, image.get_height() * 2))
     except pygame.error:
-        raise SystemExit, "Unable to load: " + filename
+        raise SystemExit("Unable to load: " + filename)
     return image.convert_alpha()
 
 
@@ -32,19 +31,21 @@ class Game(object):
         self.players = list()
         self.screen = screen
         self.create_level()
-        self.Player = Player(screen, 0, "data/zn2.png", self.objects, \
+        self.player = Player(screen, 0, "data/zn2.png", self.objects, \
                              self.players, self.sock)
         self.clock = pygame.time.Clock()
-        self.bg = load_image("data/background.png")
+        self.background = load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
         if self.server == True:
-            self.t = threading.Thread(target=self.connection, args=(self,))
-            self.t.start()
+            self.thread = threading.Thread(target=self.connection, args=(self,))
+            self.thread.setDaemon(True)
+            self.thread.start()
             self.connected = True
         if self.server == False:
-            self.t = threading.Thread(target=self.getdata, args=(self,))
-            self.t.start()
+            self.thread = threading.Thread(target=self.getdata, args=(self,))
+            self.thread.setDaemon(True)
+            self.thread.start()
             self.connected = True
         self.main_loop()
 
@@ -82,32 +83,32 @@ class Game(object):
             self.clock.tick(30)
             self.draw()
             pygame.display.flip()
-            self.Player.update()
+            self.player.update()
             for i in self.players:
                 i.update()
-            for e in pygame.event.get():
-                if e.type == pygame.QUIT:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     sys.exit()
-                if e.type == pygame.KEYDOWN:
-                    if e.key == pygame.K_ESCAPE:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
                         self.getconnections = False
                         sys.exit()
-                    if e.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT:
                         self.send_info("right")
-                        self.Player.move("right")
-                    if e.key == pygame.K_LEFT:
+                        self.player.move("right")
+                    if event.key == pygame.K_LEFT:
                         self.send_info("left")
-                        self.Player.move("left")
-                    if e.key == pygame.K_SPACE:
+                        self.player.move("left")
+                    if event.key == pygame.K_SPACE:
                         self.send_info("space")
-                        self.Player.move("space")
-                if e.type == pygame.KEYUP:
-                    if e.key == pygame.K_RIGHT:
+                        self.player.move("space")
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RIGHT:
                         self.send_info("rightup")
-                        self.Player.move("rightup")
-                    if e.key == pygame.K_LEFT:
+                        self.player.move("rightup")
+                    if event.key == pygame.K_LEFT:
                         self.send_info("leftup")
-                        self.Player.move("leftup")
+                        self.player.move("leftup")
 
     def create_level(self):
         self.objects.append(Platform(self.screen, "data/bush-2.png", 0, 450, 50, 25))
@@ -160,10 +161,10 @@ class Game(object):
         self.objects.append(Platform(self.screen, "data/cloud.png", 520, 50, 0, 25))
 
     def draw(self):
-        self.screen.blit(self.bg, (0, 0))
+        self.screen.blit(self.background, (0, 0))
         for i in self.objects:
             i.draw()
-        self.Player.draw()
+        self.player.draw()
         for i in self.players:
             i.draw()
 

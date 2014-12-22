@@ -2,8 +2,7 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import os, pygame, sys, time
-from pygame.locals import *
+import os, pygame, sys
 import game
 
 
@@ -11,11 +10,11 @@ def runGame(screen):
     game.Game(screen)
 
 
-def help(screen):
+def helpfun(screen):
     pass
 
 
-def quit(screen):
+def quitfun(screen):
     sys.exit()
 
 
@@ -43,14 +42,14 @@ class Menu(object):
     def __init__(self, screen):
         self.screen = screen
         self.menu = SubMenu(screen, (("NEW_GAME", runGame), ("CONNECT", connect), \
-                                     ("OPTIONS", options), ("CONTROLS", help), ("QUIT_GAME", quit)))
+                                     ("OPTIONS", options), ("CONTROLS", helpfun), ("QUIT_GAME", quitfun)))
         self.menu.set_highlight_color((255, 0, 0))
         self.menu.set_normal_color((255, 255, 255))
         self.menu.center_at(300, 400)
         self.menu.set_font(pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16))
         image = pygame.image.load("data/menu.png")
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
-        self.bg = image.convert_alpha()
+        self.background = image.convert_alpha()
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16)
         self.font2 = pygame.font.Font(os.path.realpath("data/fonts/super-mario-64.ttf"), 45)
         self.clock = pygame.time.Clock()
@@ -72,7 +71,7 @@ class Menu(object):
                     pygame.quit()
                     return
 
-            self.screen.blit(self.bg, (0, 0))
+            self.screen.blit(self.background, (0, 0))
 
             ren = self.font2.render("JumpNbump", 1, (255, 255, 255))
             self.screen.blit(ren, (320 - ren.get_width() / 2, 180))
@@ -147,12 +146,12 @@ class SubMenu(object):
 
     def draw(self, surface):
         i = 0
-        for o in self.options:
+        for option in self.options:
             if i == self.option:
                 clr = self.hcolor
             else:
                 clr = self.color
-            text = o[0]
+            text = option[0]
             ren = self.font.render(text, 2, clr)
             if ren.get_width() > self.width:
                 self.width = ren.get_width()
@@ -162,13 +161,13 @@ class SubMenu(object):
             i += 1
 
     def update(self, events):
-        for e in events:
-            if e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_DOWN:
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
                     self.option += 1
-                if e.key == pygame.K_UP:
+                if event.key == pygame.K_UP:
                     self.option -= 1
-                if e.key == pygame.K_RETURN:
+                if event.key == pygame.K_RETURN:
                     self.options[self.option][1](self.screen)
         if self.option > len(self.options) - 1:
             self.option = 0

@@ -2,15 +2,16 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import game, pygame, threading
+import game, threading
 
 
-class Player:
+class Player(object):
     def __init__(self, screen, num, image, sprites, players, conn):
         self.conn = conn
         if num != 0:
-            self.t = threading.Thread(target=self.connection, args=(self,))
-            self.t.start()
+            self.thread = threading.Thread(target=self.connection, args=(self,))
+            self.thread.setDaemon(True)
+            self.thread.start()
         self.screen = screen
         self.players = players
         self.sprites = sprites
@@ -115,7 +116,7 @@ class Player:
         self.died = True
 
 
-class Platform:
+class Platform(object):
     def __init__(self, screen, image, posx, posy, len, high, kills=False):
         self.kills = kills
         self.len = len
