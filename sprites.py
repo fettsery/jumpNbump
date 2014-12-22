@@ -22,7 +22,7 @@ class Player(object):
         """
         self.conn = conn
         if num != 0:
-            self.thread = threading.Thread(target=self.connection, args=(self,))
+            self.thread = threading.Thread(target=self.connection)
             self.thread.setDaemon(True)
             self.thread.start()
         self.screen = screen
@@ -71,14 +71,11 @@ class Player(object):
                 self.jumping = True
                 self.jump_acceleration = 0.6
 
-    def connection(self, some):
+    def connection(self):
         """
         receiving commands thread
-        :param some:
         :return:
         """
-        if some:
-            pass
         while True:
             data = self.conn.recv(1024)
             if data:

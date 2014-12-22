@@ -22,20 +22,17 @@ class Server(object):
         self.background = data.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
-        self.thread = threading.Thread(target=self.connection, args=(self,))
+        self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
         self.connected = True
         self.main_loop()
 
-    def connection(self, some):
+    def connection(self):
         """
         manage connections
-        :param some:
         :return:
         """
-        if some:
-            pass
         i = 1
         while self.getconnections:
             conn, _ = self.sock.accept()
@@ -124,20 +121,17 @@ class Client(object):
         self.background = data.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
-        self.thread = threading.Thread(target=self.getdata, args=(self,))
+        self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
         self.thread.start()
         self.connected = True
         self.main_loop()
 
-    def getdata(self, some):
+    def getdata(self):
         """
         receiving data from clients
-        :param some:
         :return:
         """
-        if some:
-            pass
         while True:
             data = self.sock.recv(1024)
             if data:
