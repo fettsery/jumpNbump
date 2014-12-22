@@ -4,9 +4,21 @@
 # fettser.yury
 import game, threading
 
-
 class Player(object):
+    """
+    player Class
+    """
     def __init__(self, screen, num, image, sprites, players, conn):
+        """
+        initialising
+        :param screen:
+        :param num:
+        :param image:
+        :param sprites:
+        :param players:
+        :param conn:
+        :return:
+        """
         self.conn = conn
         if num != 0:
             self.thread = threading.Thread(target=self.connection, args=(self,))
@@ -30,9 +42,18 @@ class Player(object):
         self.score = 0
 
     def draw(self):
+        """
+        drawing player
+        :return:
+        """
         self.screen.blit(self.image, (self.posx, self.posy - 30))
 
     def move(self, action):
+        """
+        moving actions
+        :param action:
+        :return:
+        """
         if action == "right":
             self.dx += 3
             self.image = self.imager
@@ -50,6 +71,13 @@ class Player(object):
                 self.jump_acceleration = 0.6
 
     def connection(self, some):
+        """
+        receiving commands thread
+        :param some:
+        :return:
+        """
+        if some:
+            pass
         while True:
             data = self.conn.recv(1024)
             if data:
@@ -60,6 +88,10 @@ class Player(object):
                 self.move(data)
 
     def update(self):
+        """
+        updating condition
+        :return:
+        """
 
         self.posx += self.dx
         self.check_collision()
@@ -87,6 +119,10 @@ class Player(object):
             self.jumping = False
 
     def check_collision(self):
+        """
+        checking collision with other objects
+        :return:
+        """
         falling = True
         for i in self.sprites:
             if self.posx >= i.posx - i.len and self.posx <= i.posx:
@@ -111,13 +147,31 @@ class Player(object):
             self.jump_acceleration = 0.6
 
     def kill(self):
+        """
+        kill player
+        :return:
+        """
         self.image = game.load_image("data/dead.png")
         self.jump_speed = 5
         self.died = True
 
 
 class Platform(object):
+    """
+    class for every object in game
+    """
     def __init__(self, screen, image, posx, posy, len, high, kills=False):
+        """
+        initialisation
+        :param screen:
+        :param image:
+        :param posx:
+        :param posy:
+        :param len:
+        :param high:
+        :param kills:
+        :return:
+        """
         self.kills = kills
         self.len = len
         self.high = high
@@ -127,4 +181,8 @@ class Platform(object):
         self.posy = posy
 
     def draw(self):
+        """
+        drawing object
+        :return:
+        """
         self.screen.blit(self.image, (self.posx, self.posy))

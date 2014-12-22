@@ -6,42 +6,97 @@ import os, pygame, sys
 import game
 
 
-def runGame(screen):
+def rungame(screen):
+    """
+    running new game
+    :param screen:
+    :return:
+    """
     game.Game(screen)
 
 
 def helpfun(screen):
-    pass
+    """
+    printing controls
+    :param screen:
+    :return:
+    """
+    if screen:
+        pass
 
 
 def quitfun(screen):
+    """
+    exit from game
+    :param screen:
+    :return:
+    """
+    if screen:
+        pass
     sys.exit()
 
 
 def fullscreen(screen):
+    """
+    make fullscreen
+    :param screen:
+    :return:
+    """
+    if screen:
+        pass
     screen = pygame.display.set_mode((640, 480), pygame.FULLSCREEN)
 
 
 def normalscreen(screen):
+    """
+    make normalscreen
+    :param screen:
+    :return:
+    """
+    if screen:
+        pass
     screen = pygame.display.set_mode((640, 480))
 
 
-def Return(screen):
+def returntomain(screen):
+    """
+    return to main menu
+    :param screen:
+    :return:
+    """
     Menu(screen)
 
 
 def connect(screen):
+    """
+    connect to server
+    :param screen:
+    :return:
+    """
     game.Game(screen, False)
 
 
 def options(screen):
+    """
+    options menu
+    :param screen:
+    :return:
+    """
     MenuOptions(screen)
 
 
 class Menu(object):
+    """
+    Menu class
+    """
     def __init__(self, screen):
+        """
+        initialising
+        :param screen:
+        :return:
+        """
         self.screen = screen
-        self.menu = SubMenu(screen, (("NEW_GAME", runGame), ("CONNECT", connect), \
+        self.menu = SubMenu(screen, (("NEW_GAME", rungame), ("CONNECT", connect), \
                                      ("OPTIONS", options), ("CONTROLS", helpfun), ("QUIT_GAME", quitfun)))
         self.menu.set_highlight_color((255, 0, 0))
         self.menu.set_normal_color((255, 255, 255))
@@ -59,15 +114,19 @@ class Menu(object):
         self.main_loop()
 
     def main_loop(self):
+        """
+        main menu loop
+        :return:
+        """
         while 1:
             self.clock.tick(30)
             events = pygame.event.get()
             self.menu.update(events)
-            for e in events:
-                if e.type == pygame.QUIT:
+            for event in events:
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     return
-                if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     return
 
@@ -84,37 +143,49 @@ class Menu(object):
 
 
 class MenuOptions(object):
+    """
+    Options class
+    """
     def __init__(self, screen):
+        """
+        initialising
+        :param screen:
+        :return:
+        """
         self.screen = screen
-        self.menuO = SubMenu(screen, (("FULLSCREEN", fullscreen), ("WINDOWED MODE", normalscreen), ("RETURN", Return)))
-        self.menuO.set_highlight_color((255, 0, 0))
-        self.menuO.set_normal_color((255, 255, 255))
-        self.menuO.center_at(300, 400)
-        self.menuO.set_font(pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16))
+        self.menuoptions = SubMenu(screen, (("FULLSCREEN", fullscreen), ("WINDOWED MODE", normalscreen), ("RETURN", returntomain)))
+        self.menuoptions.set_highlight_color((255, 0, 0))
+        self.menuoptions.set_normal_color((255, 255, 255))
+        self.menuoptions.center_at(300, 400)
+        self.menuoptions.set_font(pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16))
         image = pygame.image.load("data/menu.png")
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
-        self.bg = image.convert_alpha()
+        self.background = image.convert_alpha()
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16)
         self.font2 = pygame.font.Font(os.path.realpath("data/fonts/super-mario-64.ttf"), 45)
         events = pygame.event.get()
         self.clock = pygame.time.Clock()
-        self.menuO.update(events)
+        self.menuoptions.update(events)
         self.main_loop()
 
     def main_loop(self):
+        """
+        main options loop
+        :return:
+        """
         while 1:
             self.clock.tick(30)
             events = pygame.event.get()
-            self.menuO.update(events)
-            for e in events:
-                if e.type == pygame.QUIT:
+            self.menuoptions.update(events)
+            for event in events:
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     return
-                if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     return
 
-            self.screen.blit(self.bg, (0, 0))
+            self.screen.blit(self.background, (0, 0))
 
             ren = self.font2.render("JumpNbump", 1, (255, 255, 255))
             self.screen.blit(ren, (320 - ren.get_width() / 2, 180))
@@ -122,29 +193,43 @@ class MenuOptions(object):
             ren = self.font2.render("Python", 1, (255, 255, 255))
             self.screen.blit(ren, (320 - ren.get_width() / 2, 235))
 
-            self.menuO.draw(self.screen)
+            self.menuoptions.draw(self.screen)
             pygame.display.flip()
 
 
 class SubMenu(object):
+    """
+    Submenu class
+    """
     def __init__(self, screen, options):
+        """
+        initialising
+        :param screen:
+        :param options:
+        :return:
+        """
         self.screen = screen
         self.options = options
-        self.x = 0
-        self.y = 0
+        self.xcoord = 0
+        self.ycoord = 0
         self.font = pygame.font.Font(None, 32)
         self.option = 0
         self.width = 1
         self.color = [0, 0, 0]
         self.hcolor = [255, 0, 0]
         self.height = len(self.options) * self.font.get_height()
-        for o in self.options:
-            text = o[0]
+        for option in self.options:
+            text = option[0]
             ren = self.font.render(text, 2, (0, 0, 0))
             if ren.get_width() > self.width:
                 self.width = ren.get_width()
 
     def draw(self, surface):
+        """
+        draw menu
+        :param surface:
+        :return:
+        """
         i = 0
         for option in self.options:
             if i == self.option:
@@ -156,11 +241,16 @@ class SubMenu(object):
             if ren.get_width() > self.width:
                 self.width = ren.get_width()
             surface.blit(ren,
-                         ((self.x + self.width / 3 * 2) - ren.get_width() / 2,
-                          self.y + i * (self.font.get_height() + 4)))
+                         ((self.xcoord + self.width / 3 * 2) - ren.get_width() / 2,
+                          self.ycoord + i * (self.font.get_height() + 4)))
             i += 1
 
     def update(self, events):
+        """
+        update menu
+        :param events:
+        :return:
+        """
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
@@ -174,19 +264,46 @@ class SubMenu(object):
         if self.option < 0:
             self.option = len(self.options) - 1
 
-    def set_pos(self, x, y):
-        self.x = x
-        self.y = y
+    def set_pos(self, xcoord, ycoord):
+        """
+        set position
+        :param xcoord:
+        :param ycoord:
+        :return:
+        """
+        self.xcoord = xcoord
+        self.ycoord = ycoord
 
     def set_font(self, font):
+        """
+        setting font
+        :param font:
+        :return:
+        """
         self.font = font
 
     def set_highlight_color(self, color):
+        """
+        seting hihlight color
+        :param color:
+        :return:
+        """
         self.hcolor = color
 
     def set_normal_color(self, color):
+        """
+        setting normal color
+        :param color:
+        :return:
+        """
         self.color = color
 
-    def center_at(self, x, y):
-        self.x = x - (self.width / 2)
-        self.y = y - (self.height / 2)
+    def center_at(self, xcoord, ycoord):
+        """
+        center at x, y
+        :param xcoord:
+        :param ycoord:
+        :return:
+        """
+        self.xcoord = xcoord - (self.width / 2)
+        self.ycoord = ycoord - (self.height / 2)
