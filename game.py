@@ -25,7 +25,6 @@ class Server(object):
         self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
-        self.connected = True
         self.main_loop()
 
     def connection(self):
@@ -107,7 +106,6 @@ class Client(object):
         :param server: True if it is server, False if it is client
         :return:
         """
-        self.getconnections = True
         self.sock = socket.socket()
         self.sock.connect(('localhost', 9092))
         self.objects = list()
@@ -124,7 +122,6 @@ class Client(object):
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
         self.thread.start()
-        self.connected = True
         self.main_loop()
 
     def getdata(self):
@@ -169,7 +166,6 @@ class Client(object):
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.getconnections = False
                         sys.exit()
                     if event.key == pygame.K_RIGHT:
                         self.send_info("right")
