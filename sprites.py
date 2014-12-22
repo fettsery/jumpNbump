@@ -2,7 +2,8 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import game, threading
+import threading
+import data
 
 class Player(object):
     """
@@ -27,8 +28,8 @@ class Player(object):
         self.screen = screen
         self.players = players
         self.sprites = sprites
-        self.imagel = game.load_image(image)
-        self.imager = game.load_image("data/zn2r.png")
+        self.imagel = data.load_image(image)
+        self.imager = data.load_image("data/zn2r.png")
         self.image = self.imager
         self.num = num
         self.posx = 20
@@ -125,7 +126,7 @@ class Player(object):
         """
         falling = True
         for i in self.sprites:
-            if self.posx >= i.posx - i.len and self.posx <= i.posx:
+            if self.posx >= i.posx - i.length and self.posx <= i.posx:
                 if self.posy >= i.posy - i.high - 10 and self.posy <= i.posy - i.high + 15:
                     if i.kills:
                         self.kill()
@@ -151,7 +152,7 @@ class Player(object):
         kill player
         :return:
         """
-        self.image = game.load_image("data/dead.png")
+        self.image = data.load_image("data/dead.png")
         self.jump_speed = 5
         self.died = True
 
@@ -160,23 +161,23 @@ class Platform(object):
     """
     class for every object in game
     """
-    def __init__(self, screen, image, posx, posy, len, high, kills=False):
+    def __init__(self, screen, image, posx, posy, length, high, kills=False):
         """
         initialisation
         :param screen:
         :param image:
         :param posx:
         :param posy:
-        :param len:
+        :param length:
         :param high:
         :param kills:
         :return:
         """
         self.kills = kills
-        self.len = len
+        self.length = length
         self.high = high
         self.screen = screen
-        self.image = game.load_image(image)
+        self.image = data.load_image(image)
         self.posx = posx
         self.posy = posy
 

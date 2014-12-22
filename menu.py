@@ -12,7 +12,7 @@ def rungame(screen):
     :param screen:
     :return:
     """
-    game.Game(screen)
+    game.Server(screen)
 
 
 def helpfun(screen):
@@ -73,7 +73,7 @@ def connect(screen):
     :param screen:
     :return:
     """
-    game.Game(screen, False)
+    game.Client(screen)
 
 
 def options(screen):

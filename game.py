@@ -3,63 +3,29 @@
 # 2.7
 # fettser.yury
 import pygame, os, sys, socket, threading
-import sprites
+import sprites, data
 
-def load_image(filename):
-    """
-    loading image from file
-    :param filename: -name of input file
-    :return:
-    """
-    filename = os.path.realpath(filename)
-    try:
-        image = pygame.image.load(filename)
-        image = pygame.transform.scale(image, \
-                                       (image.get_width() * 2, image.get_height() * 2))
-    except pygame.error:
-        raise SystemExit("Unable to load: " + filename)
-    return image.convert_alpha()
-
-
-class Game(object):
-    """
-    main Game class
-    """
-    def __init__(self, screen, server=True):
-        """
-        :param screen:
-        :param server: True if it is server, False if it is client
-        :return:
-        """
-        self.server = server
+class Server(object):
+    def __init__(self, screen):
         self.getconnections = True
-        if server == True:
-            self.sock = socket.socket()
-            self.sock.bind(('', 9092))
-            self.sock.listen(7)
-        if server == False:
-            self.sock = socket.socket()
-            self.sock.connect(('localhost', 9092))
+        self.sock = socket.socket()
+        self.sock.bind(('', 9092))
+        self.sock.listen(7)
         self.objects = list()
         self.players = list()
         self.screen = screen
-        self.create_level()
+        self.level = Level(self.objects, screen)
+        self.level.create_level()
         self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
                              self.players, self.sock)
         self.clock = pygame.time.Clock()
-        self.background = load_image("data/background.png")
+        self.background = data.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
-        if self.server == True:
-            self.thread = threading.Thread(target=self.connection, args=(self,))
-            self.thread.setDaemon(True)
-            self.thread.start()
-            self.connected = True
-        if self.server == False:
-            self.thread = threading.Thread(target=self.getdata, args=(self,))
-            self.thread.setDaemon(True)
-            self.thread.start()
-            self.connected = True
+        self.thread = threading.Thread(target=self.connection, args=(self,))
+        self.thread.setDaemon(True)
+        self.thread.start()
+        self.connected = True
         self.main_loop()
 
     def connection(self, some):
@@ -72,32 +38,10 @@ class Game(object):
             pass
         i = 1
         while self.getconnections:
-            conn, addr = self.sock.accept()
-            if addr:
-                pass
+            conn, _ = self.sock.accept()
             self.players.append(sprites.Player(self.screen, i, "data/zn2.png", \
                                        self.objects, self.players, conn))
             i += 1
-
-    def getdata(self, some):
-        """
-        receiving data from clients
-        :param some:
-        :return:
-        """
-        if some:
-            pass
-        while True:
-            data = self.sock.recv(1024)
-            if data:
-                try:
-                    player = self.players[int(data)]
-                except:
-                    self.players.append(sprites.Player(self.screen, int(data), "data/zn2.png", \
-                                               self.objects, self.players, self.sock))
-                    player = self.players[int(data)]
-                data = self.sock.recv(1024)
-                player.move(data)
 
     def send_info(self, action):
         """
@@ -105,12 +49,9 @@ class Game(object):
         :param action: what to send
         :return:
         """
-        if self.server == False:
-            self.sock.send(action)
-        if self.server == True:
-            for i in self.players:
-                i.conn.send("0")
-                i.conn.send(action)
+        for i in self.players:
+            i.conn.send("0")
+            i.conn.send(action)
 
     def main_loop(self):
         """
@@ -147,6 +88,128 @@ class Game(object):
                     if event.key == pygame.K_LEFT:
                         self.send_info("leftup")
                         self.player.move("leftup")
+    def draw(self):
+        """
+        draw everything
+        :return:
+        """
+        self.screen.blit(self.background, (0, 0))
+        for i in self.objects:
+            i.draw()
+        self.player.draw()
+        for i in self.players:
+            i.draw()
+
+class Client(object):
+    """
+    main Game class
+    """
+    def __init__(self, screen):
+        """
+        :param screen:
+        :param server: True if it is server, False if it is client
+        :return:
+        """
+        self.getconnections = True
+        self.sock = socket.socket()
+        self.sock.connect(('localhost', 9092))
+        self.objects = list()
+        self.players = list()
+        self.screen = screen
+        self.level = Level(self.objects, screen)
+        self.level.create_level()
+        self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
+                             self.players, self.sock)
+        self.clock = pygame.time.Clock()
+        self.background = data.load_image("data/background.png")
+        self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
+        self.running = True
+        self.thread = threading.Thread(target=self.getdata, args=(self,))
+        self.thread.setDaemon(True)
+        self.thread.start()
+        self.connected = True
+        self.main_loop()
+
+    def getdata(self, some):
+        """
+        receiving data from clients
+        :param some:
+        :return:
+        """
+        if some:
+            pass
+        while True:
+            data = self.sock.recv(1024)
+            if data:
+                try:
+                    player = self.players[int(data)]
+                except IndexError:
+                    self.players.append(sprites.Player(self.screen, int(data), "data/zn2.png", \
+                                               self.objects, self.players, self.sock))
+                    player = self.players[int(data)]
+                data = self.sock.recv(1024)
+                player.move(data)
+
+    def send_info(self, action):
+        """
+        send command
+        :param action: what to send
+        :return:
+        """
+        self.sock.send(action)
+
+    def main_loop(self):
+        """
+        main game loop
+        :return:
+        """
+        while self.running:
+            self.clock.tick(30)
+            self.draw()
+            pygame.display.flip()
+            self.player.update()
+            for i in self.players:
+                i.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.getconnections = False
+                        sys.exit()
+                    if event.key == pygame.K_RIGHT:
+                        self.send_info("right")
+                        self.player.move("right")
+                    if event.key == pygame.K_LEFT:
+                        self.send_info("left")
+                        self.player.move("left")
+                    if event.key == pygame.K_SPACE:
+                        self.send_info("space")
+                        self.player.move("space")
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RIGHT:
+                        self.send_info("rightup")
+                        self.player.move("rightup")
+                    if event.key == pygame.K_LEFT:
+                        self.send_info("leftup")
+                        self.player.move("leftup")
+
+    def draw(self):
+        """
+        draw everything
+        :return:
+        """
+        self.screen.blit(self.background, (0, 0))
+        for i in self.objects:
+            i.draw()
+        self.player.draw()
+        for i in self.players:
+            i.draw()
+
+class Level(object):
+    def __init__(self, objects, screen):
+        self.objects = objects
+        self.screen = screen
 
     def create_level(self):
         """
@@ -201,18 +264,3 @@ class Game(object):
         self.objects.append(sprites.Platform(self.screen, "data/cloud.png", 440, 50, 0, 25))
         self.objects.append(sprites.Platform(self.screen, "data/cloud.png", 480, 50, 0, 25))
         self.objects.append(sprites.Platform(self.screen, "data/cloud.png", 520, 50, 0, 25))
-
-    def draw(self):
-        """
-        draw everything
-        :return:
-        """
-        self.screen.blit(self.background, (0, 0))
-        for i in self.objects:
-            i.draw()
-        self.player.draw()
-        for i in self.players:
-            i.draw()
-
-
-
