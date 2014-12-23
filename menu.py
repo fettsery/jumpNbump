@@ -13,7 +13,7 @@ def rungame(screen):
     :return:
     """
     game.Server(screen)
-
+    game.Client(screen)
 
 def helpfun(screen):
     """

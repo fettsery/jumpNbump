@@ -9,7 +9,7 @@ class Player(object):
     """
     player Class
     """
-    def __init__(self, screen, num, image, sprites, players, conn):
+    def __init__(self, screen, num, image, sprites, players, conn, server = False):
         """
         initialising
         :param screen:
@@ -20,11 +20,8 @@ class Player(object):
         :param conn:
         :return:
         """
+        self.server = server
         self.conn = conn
-        if num != 0:
-            self.thread = threading.Thread(target=self.connection)
-            self.thread.setDaemon(True)
-            self.thread.start()
         self.screen = screen
         self.players = players
         self.sprites = sprites
@@ -35,6 +32,9 @@ class Player(object):
         self.posx = 20
         self.posy = 420
         self.dx = 0
+        self.thread = threading.Thread(target=self.connection)
+        self.thread.setDaemon(True)
+        self.thread.start()
         self.jumping = False
         self.jump_speed = 0
         self.jump_acceleration = 0
@@ -77,14 +77,14 @@ class Player(object):
         :return:
         """
         while True:
-            data = self.conn.recv(1024)
-            if data:
-                for i in self.players:
-                    if i.num != self.num:
-                        i.conn.send(str(i.num))
-                        i.conn.send(data)
-                self.move(data)
-
+            if self.server:
+                data = self.conn.recv(1024)
+                if data:
+                        for i in self.players:
+                            if self.num != i.num:
+                                i.conn.send(str(i.num))
+                                i.conn.send(data)
+                        self.move(data)
     def update(self):
         """
         updating condition

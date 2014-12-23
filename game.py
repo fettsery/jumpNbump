@@ -9,45 +9,30 @@ class Server(object):
     def __init__(self, screen):
         self.getconnections = True
         self.sock = socket.socket()
-        self.sock.bind(('', 9092))
+        self.sock.bind(('', 9093))
         self.sock.listen(7)
-        self.objects = list()
         self.players = list()
         self.screen = screen
-        self.level = Level(self.objects, screen)
-        self.level.create_level()
-        self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
-                             self.players, self.sock)
         self.clock = pygame.time.Clock()
-        self.background = data.load_image("data/background.png")
-        self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
         self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
-        self.main_loop()
+        self.mainThread = threading.Thread(target=self.main_loop)
+        self.mainThread.setDaemon(True)
+        self.mainThread.start()
 
     def connection(self):
         """
         manage connections
         :return:
         """
-        i = 1
+        i = 0
         while self.getconnections:
             conn, _ = self.sock.accept()
             self.players.append(sprites.Player(self.screen, i, "data/zn2.png", \
-                                       self.objects, self.players, conn))
+                                       self.objects, self.players, conn, True))
             i += 1
-
-    def send_info(self, action):
-        """
-        send command
-        :param action: what to send
-        :return:
-        """
-        for i in self.players:
-            i.conn.send("0")
-            i.conn.send(action)
 
     def main_loop(self):
         """
@@ -56,45 +41,8 @@ class Server(object):
         """
         while self.running:
             self.clock.tick(30)
-            self.draw()
-            pygame.display.flip()
-            self.player.update()
             for i in self.players:
                 i.update()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.getconnections = False
-                        sys.exit()
-                    if event.key == pygame.K_RIGHT:
-                        self.send_info("right")
-                        self.player.move("right")
-                    if event.key == pygame.K_LEFT:
-                        self.send_info("left")
-                        self.player.move("left")
-                    if event.key == pygame.K_SPACE:
-                        self.send_info("space")
-                        self.player.move("space")
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_RIGHT:
-                        self.send_info("rightup")
-                        self.player.move("rightup")
-                    if event.key == pygame.K_LEFT:
-                        self.send_info("leftup")
-                        self.player.move("leftup")
-    def draw(self):
-        """
-        draw everything
-        :return:
-        """
-        self.screen.blit(self.background, (0, 0))
-        for i in self.objects:
-            i.draw()
-        self.player.draw()
-        for i in self.players:
-            i.draw()
 
 class Client(object):
     """
@@ -107,7 +55,7 @@ class Client(object):
         :return:
         """
         self.sock = socket.socket()
-        self.sock.connect(('localhost', 9092))
+        self.sock.connect(('localhost', 9093))
         self.objects = list()
         self.players = list()
         self.screen = screen
@@ -133,11 +81,16 @@ class Client(object):
             data = self.sock.recv(1024)
             if data:
                 try:
-                    player = self.players[int(data)]
-                except IndexError:
-                    self.players.append(sprites.Player(self.screen, int(data), "data/zn2.png", \
-                                               self.objects, self.players, self.sock))
-                    player = self.players[int(data)]
+                    player = None
+                    for i in self.players:
+                        if i.num == int(data):
+                            player = i
+                    if player == None:
+                        player = sprites.Player(self.screen, int(data), "data/zn2.png", \
+                                                           self.objects, self.players, self.sock)
+                        self.players.append(player)
+                except ValueError:
+                    continue
                 data = self.sock.recv(1024)
                 player.move(data)
 
