@@ -14,7 +14,7 @@ class Server(object):
     Server class
     """
 
-    def __init__(self, screen):
+    def __init__(self):
         """
         initialisation
         :param screen:
@@ -24,17 +24,29 @@ class Server(object):
         self.sock = socket.socket()
         self.sock.bind(('', 9093))
         self.sock.listen(7)
-        self.players = list()
         self.objects = list()
-        self.screen = screen
+        self.connections = list()
         self.clock = pygame.time.Clock()
         self.running = True
         self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
-        self.mainthread = threading.Thread(target=self.main_loop)
-        self.mainthread.setDaemon(True)
-        self.mainthread.start()
+        self.threads = list()
+
+    def retranslate(self, num, conn):
+        """
+        receiving commands thread
+        :return:
+        """
+        while True:
+            data = conn.recv(1024)
+            j = 0
+            if data:
+                for i in self.connections:
+                    if num != j:
+                        i.send(str(j))
+                        i.send(data)
+                    j += 1
 
     def connection(self):
         """
@@ -44,19 +56,13 @@ class Server(object):
         i = 0
         while self.getconnections:
             conn, _ = self.sock.accept()
-            self.players.append(sprites.Player(self.screen, i, "data/zn2.png", \
-                                               self.objects, self.players, conn, True))
+            self.connections.append(conn)
+            thread = threading.Thread(target=self.retranslate, args=(i,conn,))
+            thread.setDaemon(True)
+            thread.start()
+            self.threads.append(thread)
             i += 1
 
-    def main_loop(self):
-        """
-        main game loop
-        :return:
-        """
-        while self.running:
-            self.clock.tick(30)
-            for i in self.players:
-                i.update()
 
 
 class Client(object):

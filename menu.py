@@ -12,7 +12,7 @@ def rungame(screen):
     :param screen:
     :return:
     """
-    game.Server(screen)
+    game.Server()
     game.Client(screen)
 
 

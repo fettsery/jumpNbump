@@ -11,7 +11,7 @@ class Player(object):
     player Class
     """
 
-    def __init__(self, screen, num, image, sprites, players, conn, server=False):
+    def __init__(self, screen, num, image, sprites, players, conn):
         """
         initialising
         :param screen:
@@ -22,7 +22,6 @@ class Player(object):
         :param conn:
         :return:
         """
-        self.server = server
         self.conn = conn
         self.screen = screen
         self.players = players
@@ -34,9 +33,6 @@ class Player(object):
         self.posx = 20
         self.posy = 420
         self.dx = 0
-        self.thread = threading.Thread(target=self.connection)
-        self.thread.setDaemon(True)
-        self.thread.start()
         self.jumping = False
         self.jump_speed = 0
         self.jump_acceleration = 0
@@ -72,21 +68,6 @@ class Player(object):
                 self.jump_speed = -11.4
                 self.jumping = True
                 self.jump_acceleration = 0.6
-
-    def connection(self):
-        """
-        receiving commands thread
-        :return:
-        """
-        while True:
-            if self.server:
-                data = self.conn.recv(1024)
-                if data:
-                    for i in self.players:
-                        if self.num != i.num:
-                            i.conn.send(str(i.num))
-                            i.conn.send(data)
-                    self.move(data)
 
     def update(self):
         """
