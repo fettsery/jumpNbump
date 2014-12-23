@@ -4,6 +4,7 @@
 # fettser.yury
 import os, pygame
 
+
 def load_image(filename):
     """
     loading image from file

@@ -8,10 +8,12 @@ module with server and client
 import pygame, os, sys, socket, threading
 import sprites, datas
 
+
 class Server(object):
     """
     Server class
     """
+
     def __init__(self, screen):
         """
         initialisation
@@ -43,7 +45,7 @@ class Server(object):
         while self.getconnections:
             conn, _ = self.sock.accept()
             self.players.append(sprites.Player(self.screen, i, "data/zn2.png", \
-                                       self.objects, self.players, conn, True))
+                                               self.objects, self.players, conn, True))
             i += 1
 
     def main_loop(self):
@@ -56,10 +58,12 @@ class Server(object):
             for i in self.players:
                 i.update()
 
+
 class Client(object):
     """
     main Game class
     """
+
     def __init__(self, screen):
         """
         :param screen:
@@ -74,7 +78,7 @@ class Client(object):
         self.level = Level(self.objects, screen)
         self.level.create_level()
         self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
-                             self.players, self.sock)
+                                     self.players, self.sock)
         self.clock = pygame.time.Clock()
         self.background = datas.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
@@ -99,7 +103,7 @@ class Client(object):
                             player = i
                     if player == None:
                         player = sprites.Player(self.screen, int(data), "data/zn2.png", \
-                                                           self.objects, self.players, self.sock)
+                                                self.objects, self.players, self.sock)
                         self.players.append(player)
                 except ValueError:
                     continue
@@ -160,6 +164,7 @@ class Client(object):
         self.player.draw()
         for i in self.players:
             i.draw()
+
 
 class Level(object):
     def __init__(self, objects, screen):

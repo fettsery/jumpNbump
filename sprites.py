@@ -5,11 +5,13 @@
 import threading
 import datas
 
+
 class Player(object):
     """
     player Class
     """
-    def __init__(self, screen, num, image, sprites, players, conn, server = False):
+
+    def __init__(self, screen, num, image, sprites, players, conn, server=False):
         """
         initialising
         :param screen:
@@ -80,11 +82,12 @@ class Player(object):
             if self.server:
                 data = self.conn.recv(1024)
                 if data:
-                        for i in self.players:
-                            if self.num != i.num:
-                                i.conn.send(str(i.num))
-                                i.conn.send(data)
-                        self.move(data)
+                    for i in self.players:
+                        if self.num != i.num:
+                            i.conn.send(str(i.num))
+                            i.conn.send(data)
+                    self.move(data)
+
     def update(self):
         """
         updating condition
@@ -158,6 +161,7 @@ class Platform(object):
     """
     class for every object in game
     """
+
     def __init__(self, screen, image, posx, posy, length, high, kills=False):
         """
         initialisation

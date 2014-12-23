@@ -15,6 +15,7 @@ def rungame(screen):
     game.Server(screen)
     game.Client(screen)
 
+
 def helpfun(screen):
     """
     printing controls
@@ -89,6 +90,7 @@ class Menu(object):
     """
     Menu class
     """
+
     def __init__(self, screen):
         """
         initialising
@@ -146,6 +148,7 @@ class MenuOptions(object):
     """
     Options class
     """
+
     def __init__(self, screen):
         """
         initialising
@@ -153,7 +156,8 @@ class MenuOptions(object):
         :return:
         """
         self.screen = screen
-        self.menuoptions = SubMenu(screen, (("FULLSCREEN", fullscreen), ("WINDOWED MODE", normalscreen), ("RETURN", returntomain)))
+        self.menuoptions = SubMenu(screen, (
+        ("FULLSCREEN", fullscreen), ("WINDOWED MODE", normalscreen), ("RETURN", returntomain)))
         self.menuoptions.set_highlight_color((255, 0, 0))
         self.menuoptions.set_normal_color((255, 255, 255))
         self.menuoptions.center_at(300, 400)
@@ -201,6 +205,7 @@ class SubMenu(object):
     """
     Submenu class
     """
+
     def __init__(self, screen, optionsa):
         """
         initialising
