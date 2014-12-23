@@ -2,25 +2,37 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
+"""
+module with server and client
+"""
 import pygame, os, sys, socket, threading
-import sprites, data
+import sprites, datas
 
 class Server(object):
+    """
+    Server class
+    """
     def __init__(self, screen):
+        """
+        initialisation
+        :param screen:
+        :return:
+        """
         self.getconnections = True
         self.sock = socket.socket()
         self.sock.bind(('', 9093))
         self.sock.listen(7)
         self.players = list()
+        self.objects = list()
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.running = True
         self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
-        self.mainThread = threading.Thread(target=self.main_loop)
-        self.mainThread.setDaemon(True)
-        self.mainThread.start()
+        self.mainthread = threading.Thread(target=self.main_loop)
+        self.mainthread.setDaemon(True)
+        self.mainthread.start()
 
     def connection(self):
         """
@@ -64,7 +76,7 @@ class Client(object):
         self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
                              self.players, self.sock)
         self.clock = pygame.time.Clock()
-        self.background = data.load_image("data/background.png")
+        self.background = datas.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
         self.running = True
         self.thread = threading.Thread(target=self.getdata)

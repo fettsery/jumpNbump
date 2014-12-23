@@ -3,7 +3,7 @@
 # 2.7
 # fettser.yury
 import threading
-import data
+import datas
 
 class Player(object):
     """
@@ -25,8 +25,8 @@ class Player(object):
         self.screen = screen
         self.players = players
         self.sprites = sprites
-        self.imagel = data.load_image(image)
-        self.imager = data.load_image("data/zn2r.png")
+        self.imagel = datas.load_image(image)
+        self.imager = datas.load_image("data/zn2r.png")
         self.image = self.imager
         self.num = num
         self.posx = 20
@@ -149,7 +149,7 @@ class Player(object):
         kill player
         :return:
         """
-        self.image = data.load_image("data/dead.png")
+        self.image = datas.load_image("data/dead.png")
         self.jump_speed = 5
         self.died = True
 
@@ -174,7 +174,7 @@ class Platform(object):
         self.length = length
         self.high = high
         self.screen = screen
-        self.image = data.load_image(image)
+        self.image = datas.load_image(image)
         self.posx = posx
         self.posy = posy
 
