@@ -9,7 +9,7 @@ import game
 def rungame(screen):
     """
     running new game
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     game.Server()
@@ -19,7 +19,7 @@ def rungame(screen):
 def helpfun(screen):
     """
     printing controls
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     if screen:
@@ -29,7 +29,7 @@ def helpfun(screen):
 def quitfun(screen):
     """
     exit from game
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     if screen:
@@ -40,7 +40,7 @@ def quitfun(screen):
 def fullscreen(screen):
     """
     make fullscreen
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     if screen:
@@ -51,7 +51,7 @@ def fullscreen(screen):
 def normalscreen(screen):
     """
     make normalscreen
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     if screen:
@@ -62,7 +62,7 @@ def normalscreen(screen):
 def returntomain(screen):
     """
     return to main menu
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     Menu(screen)
@@ -80,7 +80,7 @@ def connect(screen):
 def options(screen):
     """
     options menu
-    :param screen:
+    :param screen: main view screen
     :return:
     """
     MenuOptions(screen)
@@ -88,13 +88,13 @@ def options(screen):
 
 class Menu(object):
     """
-    Menu class
+    Menu class(buttons and actions)
     """
 
     def __init__(self, screen):
         """
         initialising
-        :param screen:
+        :param screen: main view screen
         :return:
         """
         self.screen = screen
@@ -146,13 +146,13 @@ class Menu(object):
 
 class MenuOptions(object):
     """
-    Options class
+    Options Menu class
     """
 
     def __init__(self, screen):
         """
         initialising
-        :param screen:
+        :param screen: main view screen
         :return:
         """
         self.screen = screen
@@ -209,8 +209,8 @@ class SubMenu(object):
     def __init__(self, screen, optionsa):
         """
         initialising
-        :param screen:
-        :param optionsa:
+        :param screen: main view screen
+        :param optionsa: options(color)
         :return:
         """
         self.screen = screen
@@ -232,7 +232,7 @@ class SubMenu(object):
     def draw(self, surface):
         """
         draw menu
-        :param surface:
+        :param surface: main view screen
         :return:
         """
         i = 0
@@ -253,7 +253,7 @@ class SubMenu(object):
     def update(self, events):
         """
         update menu
-        :param events:
+        :param events: button presses
         :return:
         """
         for event in events:
@@ -272,8 +272,8 @@ class SubMenu(object):
     def set_pos(self, xcoord, ycoord):
         """
         set position
-        :param xcoord:
-        :param ycoord:
+        :param xcoord: x coordinate
+        :param ycoord: y coordinate
         :return:
         """
         self.xcoord = xcoord

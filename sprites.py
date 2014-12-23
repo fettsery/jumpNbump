@@ -2,27 +2,24 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import threading
 import datas
 
 
 class Player(object):
     """
-    player Class
+    player Class, checks collisions, checks state of player
     """
 
-    def __init__(self, screen, num, image, sprites, players, conn):
+    def __init__(self, screen, num, image, sprites, players):
         """
         initialising
-        :param screen:
-        :param num:
-        :param image:
-        :param sprites:
-        :param players:
-        :param conn:
+        :param screen: main view screen
+        :param num: number of client
+        :param image: image of player
+        :param sprites: another objects in game
+        :param players: another players
         :return:
         """
-        self.conn = conn
         self.screen = screen
         self.players = players
         self.sprites = sprites
@@ -146,13 +143,13 @@ class Platform(object):
     def __init__(self, screen, image, posx, posy, length, high, kills=False):
         """
         initialisation
-        :param screen:
-        :param image:
+        :param screen: main view screen
+        :param image: image of object
         :param posx:
         :param posy:
-        :param length:
-        :param high:
-        :param kills:
+        :param length: length in x coord
+        :param high: length in y coord
+        :param kills: if True it kills player on collision
         :return:
         """
         self.kills = kills

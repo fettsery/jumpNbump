@@ -11,13 +11,12 @@ import sprites, datas
 
 class Server(object):
     """
-    Server class
+    Server class, getting actions messages from clients and retranslates it to other clients
     """
 
     def __init__(self):
         """
         initialisation
-        :param screen:
         :return:
         """
         self.getconnections = True
@@ -36,6 +35,8 @@ class Server(object):
     def retranslate(self, num, conn):
         """
         receiving commands thread
+        :param: num - number of client
+        :param: conn - its socket
         :return:
         """
         while True:
@@ -67,13 +68,13 @@ class Server(object):
 
 class Client(object):
     """
-    main Game class
+    Client class, that gets events from keyboard, processes collisions, sends and gets information
+    from server and draws everything.
     """
 
     def __init__(self, screen):
         """
-        :param screen:
-        :param server: True if it is server, False if it is client
+        :param screen: main view screen
         :return:
         """
         self.sock = socket.socket()
@@ -84,7 +85,7 @@ class Client(object):
         self.level = Level(self.objects, screen)
         self.level.create_level()
         self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
-                                     self.players, self.sock)
+                                     self.players)
         self.clock = pygame.time.Clock()
         self.background = datas.load_image("data/background.png")
         self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
@@ -109,7 +110,7 @@ class Client(object):
                             player = i
                     if player == None:
                         player = sprites.Player(self.screen, int(data), "data/zn2.png", \
-                                                self.objects, self.players, self.sock)
+                                                self.objects, self.players)
                         self.players.append(player)
                 except ValueError:
                     continue
