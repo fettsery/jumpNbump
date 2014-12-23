@@ -209,7 +209,7 @@ class SubMenu(object):
         :return:
         """
         self.screen = screen
-        self.options = options
+        self.optionsa = options
         self.xcoord = 0
         self.ycoord = 0
         self.font = pygame.font.Font(None, 32)
@@ -217,8 +217,8 @@ class SubMenu(object):
         self.width = 1
         self.color = [0, 0, 0]
         self.hcolor = [255, 0, 0]
-        self.height = len(self.options) * self.font.get_height()
-        for option in self.options:
+        self.height = len(self.optionsa) * self.font.get_height()
+        for option in self.optionsa:
             text = option[0]
             ren = self.font.render(text, 2, (0, 0, 0))
             if ren.get_width() > self.width:
@@ -231,7 +231,7 @@ class SubMenu(object):
         :return:
         """
         i = 0
-        for option in self.options:
+        for option in self.optionsa:
             if i == self.option:
                 clr = self.hcolor
             else:
@@ -258,11 +258,11 @@ class SubMenu(object):
                 if event.key == pygame.K_UP:
                     self.option -= 1
                 if event.key == pygame.K_RETURN:
-                    self.options[self.option][1](self.screen)
-        if self.option > len(self.options) - 1:
+                    self.optionsa[self.option][1](self.screen)
+        if self.option > len(self.optionsa) - 1:
             self.option = 0
         if self.option < 0:
-            self.option = len(self.options) - 1
+            self.option = len(self.optionsa) - 1
 
     def set_pos(self, xcoord, ycoord):
         """
