@@ -1,0 +1,48 @@
+data/bush-2.png 0 450 50 25
+data/bush-3.png 50 450 50 25
+data/bush-3.png 100 450 60 25
+data/lava.png 160 460 40 25 True
+data/lava.png 200 460 40 25 True
+data/lava.png 240 460 40 25 True
+data/bush-2.png 270 450 70 25
+data/bush-2.png 340 450 60 25
+data/bush-3.png 400 450 60 25
+data/lava.png 460 460 40 25 True
+data/lava.png 500 460 60 25 True
+data/bush-2.png 560 450 50 25
+data/brick1.png 160 360 30 25
+data/brick1.png 190 360 30 25
+data/brick1.png 220 360 30 25
+data/brick1.png 430 360 30 25
+data/brick1.png 460 360 30 25
+data/brick1.png 490 360 30 25
+data/brick1.png 520 360 30 25
+data/brickblue1.png 260 280 30 25
+data/brickblue1.png 290 280 30 25
+data/brickblue1.png 320 280 30 25
+data/brickblue1.png 520 280 30 25
+data/brickblue1.png 550 280 30 25
+data/brickblue1.png 580 280 30 25
+data/brick1.png 0 280 30 25
+data/brick1.png 30 280 30 25
+data/brick1.png 60 280 30 25
+data/brick1.png 90 280 30 25
+data/brick1.png 60 180 30 25
+data/brick1.png 90 180 30 25
+data/brick1.png 120 180 30 25
+data/brickblue1.png 320 180 30 25
+data/brickblue1.png 350 180 30 25
+data/brickblue1.png 380 180 30 25
+data/brickblue1.png 410 180 30 25
+data/brickblue1.png 440 180 30 25
+data/brickblue1.png 470 180 30 25
+data/cloud.png 50 50 0 25
+data/cloud.png 90 50 0 25
+data/cloud.png 120 50 0 25
+data/cloud.png 160 50 0 25
+data/cloud.png 200 50 0 25
+data/cloud.png 240 50 0 25
+data/cloud.png 400 50 0 25
+data/cloud.png 440 50 0 25
+data/cloud.png 480 50 0 25
+data/cloud.png 520 50 0 25

@@ -2,8 +2,10 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import datas
+import datas, random
 
+ZNR_PICTURE = "data/zn2r.png"
+ZN_DEAD = "data/dead.png"
 
 class Player(object):
     """
@@ -24,11 +26,11 @@ class Player(object):
         self.players = players
         self.sprites = sprites
         self.imagel = datas.load_image(image)
-        self.imager = datas.load_image("data/zn2r.png")
+        self.imager = datas.load_image(ZNR_PICTURE)
         self.image = self.imager
         self.num = num
-        self.posx = 20
-        self.posy = 420
+        self.posx = random.randint(0, 650)
+        self.posy = random.randint(0, 420)
         self.dx = 0
         self.jumping = False
         self.jump_speed = 0
@@ -66,6 +68,14 @@ class Player(object):
                 self.jumping = True
                 self.jump_acceleration = 0.6
 
+    def goto(self, posx, posy):
+        if posx < self.posx:
+            self.image = self.imagel
+        if posx > self.posx:
+            self.image = self.imager
+        self.posx = posx
+        self.posy = posy
+
     def update(self):
         """
         updating condition
@@ -85,8 +95,8 @@ class Player(object):
             self.posy += self.jump_speed
         if self.died and self.posy >= 450:
             self.died = False
-            self.posy = 420
-            self.posx = 20
+            self.posy = random.randint(0, 420)
+            self.posx = random.randint(20, 650)
             self.image = self.imager
             self.jump_speed = 0
         if self.posx < 0:
@@ -130,7 +140,7 @@ class Player(object):
         kill player
         :return:
         """
-        self.image = datas.load_image("data/dead.png")
+        self.image = datas.load_image(ZN_DEAD)
         self.jump_speed = 5
         self.died = True
 

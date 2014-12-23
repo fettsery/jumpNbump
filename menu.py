@@ -5,6 +5,9 @@
 import os, pygame, sys
 import game
 
+FONT = "data/fonts/font.ttf"
+SMFONT = "data/fonts/super-mario-64.ttf"
+MENU_PICTURE = "data/menu.png"
 
 def rungame(screen):
     """
@@ -14,17 +17,6 @@ def rungame(screen):
     """
     game.Server()
     game.Client(screen)
-
-
-def helpfun(screen):
-    """
-    printing controls
-    :param screen: main view screen
-    :return:
-    """
-    if screen:
-        pass
-
 
 def quitfun(screen):
     """
@@ -99,16 +91,16 @@ class Menu(object):
         """
         self.screen = screen
         self.menu = SubMenu(screen, (("NEW_GAME", rungame), ("CONNECT", connect), \
-                                     ("OPTIONS", options), ("CONTROLS", helpfun), ("QUIT_GAME", quitfun)))
+                                     ("OPTIONS", options), ("QUIT_GAME", quitfun)))
         self.menu.set_highlight_color((255, 0, 0))
         self.menu.set_normal_color((255, 255, 255))
         self.menu.center_at(300, 400)
-        self.menu.set_font(pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16))
-        image = pygame.image.load("data/menu.png")
+        self.menu.set_font(pygame.font.Font(os.path.realpath(FONT), 16))
+        image = pygame.image.load(MENU_PICTURE)
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
         self.background = image.convert_alpha()
-        self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16)
-        self.font2 = pygame.font.Font(os.path.realpath("data/fonts/super-mario-64.ttf"), 45)
+        self.font = pygame.font.Font(os.path.realpath(FONT), 16)
+        self.font2 = pygame.font.Font(os.path.realpath(SMFONT), 45)
         self.clock = pygame.time.Clock()
         events = pygame.event.get()
         self.menu.update(events)
@@ -161,12 +153,12 @@ class MenuOptions(object):
         self.menuoptions.set_highlight_color((255, 0, 0))
         self.menuoptions.set_normal_color((255, 255, 255))
         self.menuoptions.center_at(300, 400)
-        self.menuoptions.set_font(pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16))
-        image = pygame.image.load("data/menu.png")
+        self.menuoptions.set_font(pygame.font.Font(os.path.realpath(FONT), 16))
+        image = pygame.image.load(MENU_PICTURE)
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
         self.background = image.convert_alpha()
-        self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 16)
-        self.font2 = pygame.font.Font(os.path.realpath("data/fonts/super-mario-64.ttf"), 45)
+        self.font = pygame.font.Font(os.path.realpath(FONT), 16)
+        self.font2 = pygame.font.Font(os.path.realpath(SMFONT), 45)
         events = pygame.event.get()
         self.clock = pygame.time.Clock()
         self.menuoptions.update(events)

@@ -8,6 +8,11 @@ module with server and client
 import pygame, os, sys, socket, threading
 import sprites, datas
 
+PORT_NUMBER = 9093
+ZN_PICTURE = "data/zn2.png"
+BG_PICTURE = "data/background.png"
+FONT = "data/fonts/font.ttf"
+LEVEL = "data/level"
 
 class Server(object):
     """
@@ -20,7 +25,7 @@ class Server(object):
         :return:
         """
         self.sock = socket.socket()
-        self.sock.bind(('', 9093))
+        self.sock.bind(('', PORT_NUMBER))
         self.sock.listen(7)
         self.objects = list()
         self.connections = list()
@@ -44,8 +49,7 @@ class Server(object):
             if data:
                 for i in self.connections:
                     if num != j:
-                        i.send(str(j))
-                        i.send(data)
+                        i.send("p" + str(j) + " " + data)
                     j += 1
 
     def connection(self):
@@ -77,16 +81,16 @@ class Client(object):
         :return:
         """
         self.sock = socket.socket()
-        self.sock.connect(('localhost', 9093))
+        self.sock.connect(('localhost', PORT_NUMBER))
         self.objects = list()
         self.players = dict()
         self.screen = screen
         create_level(self.objects, screen)
-        self.player = sprites.Player(screen, 0, "data/zn2.png", self.objects, \
+        self.player = sprites.Player(screen, 0, ZN_PICTURE, self.objects, \
                                      self.players)
         self.clock = pygame.time.Clock()
-        self.background = datas.load_image("data/background.png")
-        self.font = pygame.font.Font(os.path.realpath("data/fonts/font.ttf"), 10)
+        self.background = datas.load_image(BG_PICTURE)
+        self.font = pygame.font.Font(os.path.realpath(FONT), 10)
         self.running = True
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
@@ -101,18 +105,17 @@ class Client(object):
         while True:
             data = self.sock.recv(1024)
             if data:
+                a = data.split()
                 try:
-                    player = None
-                    player = self.players[int(data)]
+                    player = self.players[int(a[0][1])]
+                except KeyError:
+                    player = sprites.Player(self.screen, int(a[0][1]), ZN_PICTURE, \
+                                            self.objects, self.players)
+                    self.players[int(a[0][1])] = player
+                try:
+                    player.goto(float(a[1]), float(a[2]))
                 except ValueError:
                     continue
-                except KeyError:
-                    player = sprites.Player(self.screen, int(data), "data/zn2.png", \
-                                            self.objects, self.players)
-                    self.players[int(data)] = player
-                data = self.sock.recv(1024)
-                player.move(data)
-
     def send_info(self, action):
         """
         send command
@@ -128,6 +131,7 @@ class Client(object):
         """
         while self.running:
             self.clock.tick(30)
+            self.send_info(str(self.player.posx) + " " + str(self.player.posy))
             self.draw()
             pygame.display.flip()
             self.player.update()
@@ -140,20 +144,15 @@ class Client(object):
                     if event.key == pygame.K_ESCAPE:
                         sys.exit()
                     if event.key == pygame.K_RIGHT:
-                        self.send_info("right")
                         self.player.move("right")
                     if event.key == pygame.K_LEFT:
-                        self.send_info("left")
                         self.player.move("left")
                     if event.key == pygame.K_SPACE:
-                        self.send_info("space")
                         self.player.move("space")
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
-                        self.send_info("rightup")
                         self.player.move("rightup")
                     if event.key == pygame.K_LEFT:
-                        self.send_info("leftup")
                         self.player.move("leftup")
 
     def draw(self):
@@ -176,51 +175,10 @@ def create_level(objects, screen):
     :param: screen - main view screen
     :return:
     """
-    objects.append(sprites.Platform(screen, "data/bush-2.png", 0, 450, 50, 25))
-    objects.append(sprites.Platform(screen, "data/bush-3.png", 50, 450, 50, 25))
-    objects.append(sprites.Platform(screen, "data/bush-3.png", 100, 450, 60, 25))
-    objects.append(sprites.Platform(screen, "data/lava.png", 160, 460, 40, 25, True))
-    objects.append(sprites.Platform(screen, "data/lava.png", 200, 460, 40, 25, True))
-    objects.append(sprites.Platform(screen, "data/lava.png", 240, 460, 40, 25, True))
-    objects.append(sprites.Platform(screen, "data/bush-2.png", 270, 450, 70, 25))
-    objects.append(sprites.Platform(screen, "data/bush-2.png", 340, 450, 60, 25))
-    objects.append(sprites.Platform(screen, "data/bush-3.png", 400, 450, 60, 25))
-    objects.append(sprites.Platform(screen, "data/lava.png", 460, 460, 40, 25, True))
-    objects.append(sprites.Platform(screen, "data/lava.png", 500, 460, 60, 25, True))
-    objects.append(sprites.Platform(screen, "data/bush-2.png", 560, 450, 50, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 160, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 190, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 220, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 430, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 460, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 490, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 520, 360, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 260, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 290, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 320, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 520, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 550, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 580, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 0, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 30, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 60, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 90, 280, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 60, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 90, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brick1.png", 120, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 320, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 350, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 380, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 410, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 440, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/brickblue1.png", 470, 180, 30, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 50, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 90, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 120, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 160, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 200, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 240, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 400, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 440, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 480, 50, 0, 25))
-    objects.append(sprites.Platform(screen, "data/cloud.png", 520, 50, 0, 25))
+    f = open(LEVEL)
+    for line in f:
+        a = line.split()
+        cond = False
+        if len(a) == 6:
+            cond = bool(a[5])
+        objects.append(sprites.Platform(screen, a[0], int(a[1]), int(a[2]), int(a[3]), int(a[4]), cond))
