@@ -112,7 +112,7 @@ class Player(object):
                     if self.jumping and self.jump_speed > 0:
                         self.landed = True
                         self.posy = i.posy - i.high
-        for i in self.players:
+        for i in self.players.values():
             if i.posx - 30 <= self.posx <= i.posx + 30 and i.posy - 30 <= self.posy <= i.posy + 30 and i.num != self.num:
                 if self.posy >= i.posy:
                     self.kill()
