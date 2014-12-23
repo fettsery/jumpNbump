@@ -201,15 +201,15 @@ class SubMenu(object):
     """
     Submenu class
     """
-    def __init__(self, screen, options):
+    def __init__(self, screen, optionsa):
         """
         initialising
         :param screen:
-        :param options:
+        :param optionsa:
         :return:
         """
         self.screen = screen
-        self.optionsa = options
+        self.optionsa = optionsa
         self.xcoord = 0
         self.ycoord = 0
         self.font = pygame.font.Font(None, 32)
