@@ -37,6 +37,7 @@ class Player(object):
         self.jump_acceleration = 0
         self.landed = False
         self.died = False
+        self.send_died = False
         self.score = 0
 
     def draw(self):
@@ -143,6 +144,7 @@ class Player(object):
         self.image = datas.load_image(ZN_DEAD)
         self.jump_speed = 5
         self.died = True
+        self.send_died = True
 
 
 class Platform(object):

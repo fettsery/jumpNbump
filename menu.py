@@ -2,7 +2,7 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import os, pygame, sys
+import os, pygame, sys, socket
 import game
 
 FONT = "data/fonts/font.ttf"
@@ -15,7 +15,10 @@ def rungame(screen):
     :param screen: main view screen
     :return:
     """
-    game.Server()
+    try:
+        game.Server()
+    except socket.error:
+        pass
     game.Client(screen)
 
 def quitfun(screen):

@@ -6,13 +6,19 @@
 module with server and client
 """
 import pygame, os, sys, socket, threading
-import sprites, datas
+import sprites, datas, menu
 
 PORT_NUMBER = 9093
 ZN_PICTURE = "data/zn2.png"
 BG_PICTURE = "data/background.png"
 FONT = "data/fonts/font.ttf"
 LEVEL = "data/level"
+BUSH1_PICTURE = "data/bush-2.png"
+BUSH2_PICTURE = "data/bush-3.png"
+LAVA_PICTURE = "data/lava.png"
+BRICK_PICTURE = "data/brick1.png"
+BRICK_BLUE_PICTURE = "data/brickblue1.png"
+CLOUD_PICTURE = "data/cloud.png"
 
 class Server(object):
     """
@@ -44,12 +50,28 @@ class Server(object):
         :return:
         """
         while True:
-            data = conn.recv(1024)
+            try:
+                data = conn.recv(1024)
+            except:
+                j = 0
+                for i in self.connections:
+                    if num == j:
+                        self.connections.remove(i)
+                    if num != j:
+                        try:
+                            i.send("p" + str(j) + " quit")
+                        except:
+                            self.connections.remove(i)
+                j += 1
+                return
             j = 0
             if data:
                 for i in self.connections:
                     if num != j:
-                        i.send("p" + str(j) + " " + data)
+                        try:
+                            i.send("p" + str(j) + " " + data)
+                        except:
+                            self.connections.remove(i)
                     j += 1
 
     def connection(self):
@@ -103,7 +125,11 @@ class Client(object):
         :return:
         """
         while True:
-            data = self.sock.recv(1024)
+            try:
+                data = self.sock.recv(1024)
+            except:
+                menu.Menu(pygame.display.set_mode((640, 480)))
+
             if data:
                 a = data.split()
                 try:
@@ -112,6 +138,11 @@ class Client(object):
                     player = sprites.Player(self.screen, int(a[0][1]), ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[int(a[0][1])] = player
+                if a[1] == "died":
+                    print "dead"
+                    player.kill()
+                if a[1] == "quit":
+                    self.players.pop(int(a[0][1]))
                 try:
                     player.goto(float(a[1]), float(a[2]))
                 except ValueError:
@@ -135,6 +166,9 @@ class Client(object):
             self.draw()
             pygame.display.flip()
             self.player.update()
+            if self.player.send_died:
+                self.send_info("died")
+                self.player.send_died = False
             for i in self.players.values():
                 i.update()
             for event in pygame.event.get():
@@ -142,7 +176,7 @@ class Client(object):
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        sys.exit()
+                        menu.Menu(pygame.display.set_mode((640, 480)))
                     if event.key == pygame.K_RIGHT:
                         self.player.move("right")
                     if event.key == pygame.K_LEFT:
@@ -181,4 +215,5 @@ def create_level(objects, screen):
         cond = False
         if len(a) == 6:
             cond = bool(a[5])
-        objects.append(sprites.Platform(screen, a[0], int(a[1]), int(a[2]), int(a[3]), int(a[4]), cond))
+        var = globals()[a[0]]
+        objects.append(sprites.Platform(screen, var, int(a[1]), int(a[2]), int(a[3]), int(a[4]), cond))
