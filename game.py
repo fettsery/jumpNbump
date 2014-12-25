@@ -117,6 +117,7 @@ class Client(object):
         :param screen: main view screen
         :return:
         """
+        self.connected = True
         self.sock = socket.socket()
         try:
             self.sock.connect(('localhost', PORT_NUMBER))
@@ -140,12 +141,11 @@ class Client(object):
         receiving data from clients
         :return:
         """
-        while True:
+        while self.connected:
             try:
                 data = self.sock.recv(1024)
             except:
                 menu.Menu(pygame.display.set_mode((640, 480)))
-
             if data:
                 a = data.split()
                 try:
@@ -188,6 +188,8 @@ class Client(object):
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
+                        self.connected = False
+                        self.sock.close()
                         menu.Menu(pygame.display.set_mode((640, 480)))
                     if event.key == pygame.K_RIGHT:
                         self.send_info("right")
@@ -206,7 +208,10 @@ class Client(object):
         draw everything
         :return:
         """
-        self.screen.blit(self.background, (0, 0))
+        try:
+            self.screen.blit(self.background, (0, 0))
+        except:
+            sys.exit()
         for i in self.objects:
             i.draw()
         for i in self.players.values():
