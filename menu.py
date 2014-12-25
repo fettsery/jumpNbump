@@ -16,7 +16,7 @@ def rungame(screen):
     :return:
     """
     try:
-        game.Server()
+        game.Server(screen)
     except socket.error:
         pass
     game.Client(screen)

@@ -25,15 +25,18 @@ class Server(object):
     Server class, getting actions messages from clients and retranslates it to other clients
     """
 
-    def __init__(self):
+    def __init__(self, screen):
         """
         initialisation
         :return:
         """
+        self.screen = screen
         self.sock = socket.socket()
         self.sock.bind(('', PORT_NUMBER))
         self.sock.listen(7)
+        self.players = dict()
         self.objects = list()
+        create_level(self.objects, self.screen)
         self.connections = list()
         self.clock = pygame.time.Clock()
         self.running = True
@@ -41,6 +44,9 @@ class Server(object):
         self.thread.setDaemon(True)
         self.thread.start()
         self.threads = list()
+        thread = threading.Thread(target=self.main_loop)
+        thread.setDaemon(True)
+        thread.start()
 
     def retranslate(self, num, conn):
         """
@@ -53,26 +59,16 @@ class Server(object):
             try:
                 data = conn.recv(1024)
             except:
-                j = 0
+                self.players.pop(num)
                 for i in self.connections:
-                    if num == j:
+                    try:
+                        i.send(str(num) + " quit")
+                    except:
                         self.connections.remove(i)
-                    if num != j:
-                        try:
-                            i.send("p" + str(j) + " quit")
-                        except:
-                            self.connections.remove(i)
-                j += 1
                 return
             j = 0
             if data:
-                for i in self.connections:
-                    if num != j:
-                        try:
-                            i.send("p" + str(j) + " " + data)
-                        except:
-                            self.connections.remove(i)
-                    j += 1
+                self.players[num].move(data)
 
     def connection(self):
         """
@@ -83,11 +79,30 @@ class Server(object):
         while 1:
             conn, _ = self.sock.accept()
             self.connections.append(conn)
+            self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
+                                            self.objects, self.players)
             thread = threading.Thread(target=self.retranslate, args=(i,conn,))
             thread.setDaemon(True)
             thread.start()
             self.threads.append(thread)
             i += 1
+
+    def main_loop(self):
+        """
+        main game loop
+        :return:
+        """
+        while self.running:
+            self.clock.tick(30)
+            for i in self.connections:
+                for j in self.players.values():
+                    i.send(str(j.num) + " " + str(j.posx) + " " + str(j.posy))
+            for i in self.players.values():
+                i.update()
+                if i.send_died:
+                    i.send_died = False
+                    for j in self.connections:
+                        j.send(str(i.num) + " died")
 
 
 
@@ -103,13 +118,14 @@ class Client(object):
         :return:
         """
         self.sock = socket.socket()
-        self.sock.connect(('localhost', PORT_NUMBER))
+        try:
+            self.sock.connect(('localhost', PORT_NUMBER))
+        except:
+            return
         self.objects = list()
         self.players = dict()
         self.screen = screen
         create_level(self.objects, screen)
-        self.player = sprites.Player(screen, 0, ZN_PICTURE, self.objects, \
-                                     self.players)
         self.clock = pygame.time.Clock()
         self.background = datas.load_image(BG_PICTURE)
         self.font = pygame.font.Font(os.path.realpath(FONT), 10)
@@ -133,20 +149,20 @@ class Client(object):
             if data:
                 a = data.split()
                 try:
-                    player = self.players[int(a[0][1])]
+                    player = self.players[int(a[0][0])]
                 except KeyError:
-                    player = sprites.Player(self.screen, int(a[0][1]), ZN_PICTURE, \
+                    player = sprites.Player(self.screen, int(a[0][0]), ZN_PICTURE, \
                                             self.objects, self.players)
-                    self.players[int(a[0][1])] = player
+                    self.players[int(a[0][0])] = player
                 if a[1] == "died":
-                    print "dead"
                     player.kill()
                 if a[1] == "quit":
-                    self.players.pop(int(a[0][1]))
-                try:
-                    player.goto(float(a[1]), float(a[2]))
-                except ValueError:
-                    continue
+                    self.players.pop(int(a[0][0]))
+                else:
+                    try:
+                        player.goto(float(a[1]), float(a[2]))
+                    except ValueError:
+                        continue
     def send_info(self, action):
         """
         send command
@@ -162,15 +178,11 @@ class Client(object):
         """
         while self.running:
             self.clock.tick(30)
-            self.send_info(str(self.player.posx) + " " + str(self.player.posy))
             self.draw()
-            pygame.display.flip()
-            self.player.update()
-            if self.player.send_died:
-                self.send_info("died")
-                self.player.send_died = False
-            for i in self.players.values():
-                i.update()
+            try:
+                pygame.display.flip()
+            except:
+                sys.exit()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -178,16 +190,16 @@ class Client(object):
                     if event.key == pygame.K_ESCAPE:
                         menu.Menu(pygame.display.set_mode((640, 480)))
                     if event.key == pygame.K_RIGHT:
-                        self.player.move("right")
+                        self.send_info("right")
                     if event.key == pygame.K_LEFT:
-                        self.player.move("left")
+                        self.send_info("left")
                     if event.key == pygame.K_SPACE:
-                        self.player.move("space")
+                        self.send_info("space")
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
-                        self.player.move("rightup")
+                        self.send_info("rightup")
                     if event.key == pygame.K_LEFT:
-                        self.player.move("leftup")
+                        self.send_info("leftup")
 
     def draw(self):
         """
@@ -197,7 +209,6 @@ class Client(object):
         self.screen.blit(self.background, (0, 0))
         for i in self.objects:
             i.draw()
-        self.player.draw()
         for i in self.players.values():
             i.draw()
 

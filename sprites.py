@@ -85,7 +85,7 @@ class Player(object):
 
         self.posx += self.dx
         self.check_collision()
-        if self.jumping:
+        if self.jumping and not self.died:
             self.jump_speed += self.jump_acceleration
             if self.jump_speed > 0 and self.landed:
                 self.jump_speed = 0
@@ -120,7 +120,7 @@ class Player(object):
                     if i.kills:
                         self.kill()
                     falling = False
-                    if self.jumping and self.jump_speed > 0:
+                    if self.jumping and self.jump_speed > 0 and not self.died:
                         self.landed = True
                         self.posy = i.posy - i.high
         for i in self.players.values():
@@ -142,7 +142,7 @@ class Player(object):
         :return:
         """
         self.image = datas.load_image(ZN_DEAD)
-        self.jump_speed = 5
+        self.jump_speed = 10
         self.died = True
         self.send_died = True
 
