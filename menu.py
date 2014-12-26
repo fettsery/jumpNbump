@@ -16,7 +16,7 @@ def rungame(screen):
     :return:
     """
     try:
-        game.Server(screen)
+        game.Server(screen, 0)
     except socket.error:
         pass
     game.Client(screen)
@@ -80,6 +80,8 @@ def options(screen):
     """
     MenuOptions(screen)
 
+def playbots(screen):
+    game.Client(screen, True)
 
 class Menu(object):
     """
@@ -93,7 +95,7 @@ class Menu(object):
         :return:
         """
         self.screen = screen
-        self.menu = SubMenu(screen, (("NEW_GAME", rungame), ("CONNECT", connect), \
+        self.menu = SubMenu(screen, (("NEW_GAME", rungame), ("CONNECT_AS_BOT", playbots), ("CONNECT", connect), \
                                      ("OPTIONS", options), ("QUIT_GAME", quitfun)))
         self.menu.set_highlight_color((255, 0, 0))
         self.menu.set_normal_color((255, 255, 255))

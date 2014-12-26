@@ -7,6 +7,7 @@ module with server and client
 """
 import pygame, os, sys, socket, threading
 import sprites, datas, menu
+import math
 
 PORT_NUMBER = 9093
 ZN_PICTURE = "data/zn2.png"
@@ -19,17 +20,21 @@ LAVA_PICTURE = "data/lava.png"
 BRICK_PICTURE = "data/brick1.png"
 BRICK_BLUE_PICTURE = "data/brickblue1.png"
 CLOUD_PICTURE = "data/cloud.png"
-
+MAGIC = 1000000
 class Server(object):
     """
     Server class, getting actions messages from clients and retranslates it to other clients
     """
 
-    def __init__(self, screen):
+    def __init__(self, screen, bots):
         """
         initialisation
         :return:
         """
+        self.bots = list()
+        self.dest = 1
+        self.steps = 0
+        self.search = False
         self.screen = screen
         self.sock = socket.socket()
         self.sock.bind(('', PORT_NUMBER))
@@ -47,7 +52,6 @@ class Server(object):
         thread = threading.Thread(target=self.main_loop)
         thread.setDaemon(True)
         thread.start()
-
     def retranslate(self, num, conn):
         """
         receiving commands thread
@@ -60,6 +64,9 @@ class Server(object):
                 data = conn.recv(1024)
             except:
                 self.players.pop(num)
+                self.bots.remove(num)
+                for i in self.bots:
+                    print i
                 for i in self.connections:
                     try:
                         i.send(str(num) + " quit")
@@ -68,6 +75,8 @@ class Server(object):
                 return
             j = 0
             if data:
+                if (data == "bot"):
+                    self.bots.append(num)
                 self.players[num].move(data)
 
     def connection(self):
@@ -96,7 +105,11 @@ class Server(object):
             self.clock.tick(30)
             for i in self.connections:
                 for j in self.players.values():
-                    i.send(str(j.num) + " " + str(j.posx) + " " + str(j.posy))
+                    try:
+                        i.send(str(j.num) + " " + str(j.posx) + " " + str(j.posy))
+                    except:
+                        pass
+            self.bots_update()
             for i in self.players.values():
                 i.update()
                 if i.send_died:
@@ -104,7 +117,42 @@ class Server(object):
                     for j in self.connections:
                         j.send(str(i.num) + " died")
 
-
+    def bots_update(self):
+        for i in self.bots:
+            #find nearest player
+            min = MAGIC
+            mini = 0
+            for j in self.players.keys():
+                if j != i:
+                    dist = (self.players[i].posx - self.players[j].posx) ** 2 + \
+                        (self.players[i].posy - self.players[j].posy) ** 2
+                    if dist < min:
+                        min = dist
+                        mini = j
+            if abs(self.players[i].posx - self.players[mini].posx) < 2 and not self.players[i].jumping:
+                self.search = True
+            if self.steps > 0:
+                self.steps -= 1
+                self.players[i].posx -= 3 * self.dest
+            if self.search and not self.players[i].onboard:
+                self.players[i].posx -= 3 * self.dest
+            if self.search and self.players[i].onboard:
+                self.search = False
+                self.steps = 30
+            if self.players[i].posx <= 0:
+                self.dest *= -1
+            if self.players[i].posx >= 640:
+                self.dest *= -1
+            if self.players[i].posx > self.players[mini].posx and not self.search and self.steps == 0:
+                self.players[i].posx -= 3
+            elif not self.search and self.steps == 0:
+                self.players[i].posx += 3
+            if self.players[i].posy > self.players[mini].posy:
+                if self.players[i].onboard:
+                    self.players[i].move("space")
+            if abs(self.players[i].posx - self.players[mini].posx) < 50 and \
+                abs(self.players[i].posy - self.players[mini].posy) < 50:
+                    self.players[i].move("space")
 
 class Client(object):
     """
@@ -112,17 +160,20 @@ class Client(object):
     from server and draws everything.
     """
 
-    def __init__(self, screen):
+    def __init__(self, screen, bot = False):
         """
         :param screen: main view screen
         :return:
         """
+        self.bot = bot
         self.connected = True
         self.sock = socket.socket()
         try:
             self.sock.connect(('localhost', PORT_NUMBER))
         except:
             return
+        if bot:
+            self.send_info("bot")
         self.objects = list()
         self.players = dict()
         self.screen = screen
@@ -191,16 +242,16 @@ class Client(object):
                         self.connected = False
                         self.sock.close()
                         menu.Menu(pygame.display.set_mode((640, 480)))
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT and not self.bot:
                         self.send_info("right")
-                    if event.key == pygame.K_LEFT:
+                    if event.key == pygame.K_LEFT and not self.bot:
                         self.send_info("left")
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE and not self.bot:
                         self.send_info("space")
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_RIGHT:
+                    if event.key == pygame.K_RIGHT and not self.bot:
                         self.send_info("rightup")
-                    if event.key == pygame.K_LEFT:
+                    if event.key == pygame.K_LEFT and not self.bot:
                         self.send_info("leftup")
 
     def draw(self):
@@ -217,7 +268,6 @@ class Client(object):
         for i in self.players.values():
             i.draw()
 
-
 def create_level(objects, screen):
     """
     creating level
@@ -228,8 +278,20 @@ def create_level(objects, screen):
     f = open(LEVEL)
     for line in f:
         a = line.split()
-        cond = False
-        if len(a) == 6:
-            cond = bool(a[5])
+        boardingleft = 0
+        boardingright = 0
+        killing = 0
+        if len(a) == 6 or len(a) == 7:
+            if int(a[5]) == 0:
+                boardingleft = False
+            else:
+                boardingleft = True
+        if len(a) == 7:
+            if int(a[6]) == 0:
+                boardingright = False
+            else:
+                boardingright = True
+        if len(a) == 8:
+            killing = bool(a[7])
         var = globals()[a[0]]
-        objects.append(sprites.Platform(screen, var, int(a[1]), int(a[2]), int(a[3]), int(a[4]), cond))
+        objects.append(sprites.Platform(screen, var, int(a[1]), int(a[2]), int(a[3]), int(a[4]), boardingleft, boardingright, killing))

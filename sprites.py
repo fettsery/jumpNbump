@@ -39,6 +39,7 @@ class Player(object):
         self.died = False
         self.send_died = False
         self.score = 0
+        self.onboard = False
 
     def draw(self):
         """
@@ -117,6 +118,12 @@ class Player(object):
         for i in self.sprites:
             if self.posx >= i.posx - i.length and self.posx <= i.posx:
                 if self.posy >= i.posy - i.high - 10 and self.posy <= i.posy - i.high + 15:
+                    if self.posx >= i.posx - i.length and self.posx <= i.posx - i.length + 10 and i.boardingleft:
+                        self.onboard = True
+                    elif self.posx >= i.posx - 4 and self.posx <= i.posx and i.boardingright:
+                        self.onboard = True
+                    else:
+                        self.onboard = False
                     if i.kills:
                         self.kill()
                     falling = False
@@ -152,7 +159,7 @@ class Platform(object):
     class for every object in game
     """
 
-    def __init__(self, screen, image, posx, posy, length, high, kills=False):
+    def __init__(self, screen, image, posx, posy, length, high, boardingleft = False, boardingright = False, kills=False):
         """
         initialisation
         :param screen: main view screen
@@ -164,6 +171,8 @@ class Platform(object):
         :param kills: if True it kills player on collision
         :return:
         """
+        self.boardingleft = boardingleft
+        self.boardingright = boardingright
         self.kills = kills
         self.length = length
         self.high = high
