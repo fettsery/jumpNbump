@@ -302,21 +302,6 @@ class BotClient(Client):
         :return:
         """
         self.send_info("bot")
-        while self.running:
-            self.clock.tick(30)
-            self.draw()
-            try:
-                pygame.display.flip()
-            except:
-                sys.exit()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.connected = False
-                        self.sock.close()
-                        menu.Menu(pygame.display.set_mode((640, 480)))
 
 def create_level(objects, screen):
     """
