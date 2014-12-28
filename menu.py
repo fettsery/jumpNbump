@@ -81,7 +81,7 @@ def options(screen):
     MenuOptions(screen)
 
 def playbots(screen):
-    game.Client(screen, True)
+    game.BotClient(screen)
 
 class Menu(object):
     """

@@ -21,6 +21,7 @@ BRICK_PICTURE = "data/brick1.png"
 BRICK_BLUE_PICTURE = "data/brickblue1.png"
 CLOUD_PICTURE = "data/cloud.png"
 MAGIC = 1000000
+
 class Server(object):
     """
     Server class, getting actions messages from clients and retranslates it to other clients
@@ -160,20 +161,17 @@ class Client(object):
     from server and draws everything.
     """
 
-    def __init__(self, screen, bot = False):
+    def __init__(self, screen):
         """
         :param screen: main view screen
         :return:
         """
-        self.bot = bot
         self.connected = True
         self.sock = socket.socket()
         try:
             self.sock.connect(('localhost', PORT_NUMBER))
         except:
             return
-        if bot:
-            self.send_info("bot")
         self.objects = list()
         self.players = dict()
         self.screen = screen
@@ -242,16 +240,16 @@ class Client(object):
                         self.connected = False
                         self.sock.close()
                         menu.Menu(pygame.display.set_mode((640, 480)))
-                    if event.key == pygame.K_RIGHT and not self.bot:
+                    if event.key == pygame.K_RIGHT:
                         self.send_info("right")
-                    if event.key == pygame.K_LEFT and not self.bot:
+                    if event.key == pygame.K_LEFT:
                         self.send_info("left")
-                    if event.key == pygame.K_SPACE and not self.bot:
+                    if event.key == pygame.K_SPACE:
                         self.send_info("space")
                 if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_RIGHT and not self.bot:
+                    if event.key == pygame.K_RIGHT:
                         self.send_info("rightup")
-                    if event.key == pygame.K_LEFT and not self.bot:
+                    if event.key == pygame.K_LEFT:
                         self.send_info("leftup")
 
     def draw(self):
@@ -267,6 +265,29 @@ class Client(object):
             i.draw()
         for i in self.players.values():
             i.draw()
+
+class BotClient(Client):
+    def main_loop(self):
+        """
+        main game loop
+        :return:
+        """
+        self.send_info("bot")
+        while self.running:
+            self.clock.tick(30)
+            self.draw()
+            try:
+                pygame.display.flip()
+            except:
+                sys.exit()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.connected = False
+                        self.sock.close()
+                        menu.Menu(pygame.display.set_mode((640, 480)))
 
 def create_level(objects, screen):
     """
