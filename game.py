@@ -255,16 +255,7 @@ class Client(object):
             i.draw()
         for i in self.players.values():
             i.draw()
-
-class PlayerClient(Client):
-    """
-    A client that is controlled by player
-    """
-    def main_loop(self):
-        """
-        main game loop
-        :return:
-        """
+    def common(self):
         while self.running:
             self.clock.tick(30)
             self.draw()
@@ -280,6 +271,25 @@ class PlayerClient(Client):
                         self.connected = False
                         self.sock.close()
                         menu.Menu(pygame.display.set_mode((640, 480)))
+
+class PlayerClient(Client):
+    """
+    A client that is controlled by player
+    """
+    def main_loop(self):
+        """
+        main game loop
+        :return:
+        """
+        self.commonthread = threading.Thread(target=self.common)
+        self.commonthread.setDaemon(True)
+        self.commonthread.start()
+        self.commonevents = list()
+        while self.running:
+            self.clock.tick(30)
+            for event in pygame.event.get():
+                self.commonevents.append(event)
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         self.send_info("right")
                     if event.key == pygame.K_LEFT:
@@ -302,6 +312,7 @@ class BotClient(Client):
         :return:
         """
         self.send_info("bot")
+        self.common()
 
 def create_level(objects, screen):
     """
