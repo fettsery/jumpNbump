@@ -163,6 +163,17 @@ class Server(object):
                 abs(self.players[i].posy - self.players[mini].posy) < 50:
                     self.players[i].move("space")
 
+class ClientInfo(object):
+    def __init__(self, client_info):
+        a = client_info.split()
+        self.num = int(a[CLIENT_NUMBER_IND])
+        if a[CLIENT_INFORMATION] == "died" or a[CLIENT_INFORMATION] == "quit":
+            self.command = a[CLIENT_INFORMATION]
+        else:
+            self.posx = float(a[CLIENT_POSX])
+            self.posy = float(a[CLIENT_POSY])
+            self.command = "void"
+
 class Client(object):
     """
     Client class, that gets events from keyboard, processes collisions, sends and gets information
@@ -204,22 +215,21 @@ class Client(object):
             except:
                 menu.Menu(pygame.display.set_mode((640, 480)))
             if data:
-                client_info = data.split()
+                client_info = ClientInfo(data)
+
                 try:
-                    player = self.players[int(client_info[CLIENT_NUMBER_IND])]
+                    player = self.players[client_info.num]
                 except KeyError:
-                    player = sprites.Player(self.screen, int(client_info[CLIENT_NUMBER_IND]), ZN_PICTURE, \
+                    player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects, self.players)
-                    self.players[int(client_info[CLIENT_NUMBER_IND])] = player
-                if client_info[CLIENT_INFORMATION] == "died":
+                    self.players[client_info.num] = player
+                if client_info.command == "died":
                     player.kill()
-                if client_info[CLIENT_INFORMATION] == "quit":
-                    self.players.pop(int(client_info[CLIENT_NUMBER_IND]))
+                elif client_info.command == "quit":
+                    self.players.pop(client_info.num)
                 else:
-                    try:
-                        player.goto(float(client_info[CLIENT_POSX]), float(client_info[CLIENT_POSY]))
-                    except ValueError:
-                        continue
+                    player.goto(client_info.posx, client_info.posy)
+
     def send_info(self, action):
         """
         send command
