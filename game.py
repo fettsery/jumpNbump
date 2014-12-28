@@ -284,11 +284,9 @@ class PlayerClient(Client):
         self.commonthread = threading.Thread(target=self.common)
         self.commonthread.setDaemon(True)
         self.commonthread.start()
-        self.commonevents = list()
         while self.running:
             self.clock.tick(30)
             for event in pygame.event.get():
-                self.commonevents.append(event)
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
                         self.send_info("right")
