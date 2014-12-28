@@ -13,6 +13,10 @@ PORT_NUMBER = 9093
 ZN_PICTURE = "data/zn2.png"
 BG_PICTURE = "data/background.png"
 FONT = "data/fonts/font.ttf"
+CLIENT_NUMBER_IND = 0
+CLIENT_INFORMATION = 1
+CLIENT_POSX = 1
+CLIENT_POSY = 2
 LEVEL = "data/level"
 BUSH1_PICTURE = "data/bush-2.png"
 BUSH2_PICTURE = "data/bush-3.png"
@@ -65,7 +69,11 @@ class Server(object):
                 data = conn.recv(1024)
             except:
                 self.players.pop(num)
-                self.bots.remove(num)
+                try:
+                    self.bots.remove(num)
+                except ValueError:
+                    #it is not a bot
+                    pass
                 for i in self.bots:
                     print i
                 for i in self.connections:
@@ -196,20 +204,20 @@ class Client(object):
             except:
                 menu.Menu(pygame.display.set_mode((640, 480)))
             if data:
-                a = data.split()
+                client_info = data.split()
                 try:
-                    player = self.players[int(a[0][0])]
+                    player = self.players[int(client_info[CLIENT_NUMBER_IND])]
                 except KeyError:
-                    player = sprites.Player(self.screen, int(a[0][0]), ZN_PICTURE, \
+                    player = sprites.Player(self.screen, int(client_info[CLIENT_NUMBER_IND]), ZN_PICTURE, \
                                             self.objects, self.players)
-                    self.players[int(a[0][0])] = player
-                if a[1] == "died":
+                    self.players[int(client_info[CLIENT_NUMBER_IND])] = player
+                if client_info[CLIENT_INFORMATION] == "died":
                     player.kill()
-                if a[1] == "quit":
-                    self.players.pop(int(a[0][0]))
+                if client_info[CLIENT_INFORMATION] == "quit":
+                    self.players.pop(int(client_info[CLIENT_NUMBER_IND]))
                 else:
                     try:
-                        player.goto(float(a[1]), float(a[2]))
+                        player.goto(float(client_info[CLIENT_POSX]), float(client_info[CLIENT_POSY]))
                     except ValueError:
                         continue
     def send_info(self, action):
