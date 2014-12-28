@@ -164,6 +164,10 @@ class Server(object):
                     self.players[i].move("space")
 
 class ClientInfo(object):
+    """
+    Wrapper for data from server
+    """
+
     def __init__(self, client_info):
         a = client_info.split()
         self.num = int(a[CLIENT_NUMBER_IND])
@@ -174,10 +178,10 @@ class ClientInfo(object):
             self.posy = float(a[CLIENT_POSY])
             self.command = "void"
 
+
 class Client(object):
     """
-    Client class, that gets events from keyboard, processes collisions, sends and gets information
-    from server and draws everything.
+    Common client methods
     """
 
     def __init__(self, screen):
@@ -238,6 +242,24 @@ class Client(object):
         """
         self.sock.send(action)
 
+    def draw(self):
+        """
+        draw everything
+        :return:
+        """
+        try:
+            self.screen.blit(self.background, (0, 0))
+        except:
+            sys.exit()
+        for i in self.objects:
+            i.draw()
+        for i in self.players.values():
+            i.draw()
+
+class PlayerClient(Client):
+    """
+    A client that is controlled by player
+    """
     def main_loop(self):
         """
         main game loop
@@ -270,21 +292,10 @@ class Client(object):
                     if event.key == pygame.K_LEFT:
                         self.send_info("leftup")
 
-    def draw(self):
-        """
-        draw everything
-        :return:
-        """
-        try:
-            self.screen.blit(self.background, (0, 0))
-        except:
-            sys.exit()
-        for i in self.objects:
-            i.draw()
-        for i in self.players.values():
-            i.draw()
-
 class BotClient(Client):
+    """
+    A client, that sends server information that it is a bot and it can't control itself
+    """
     def main_loop(self):
         """
         main game loop

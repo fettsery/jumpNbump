@@ -19,7 +19,7 @@ def rungame(screen):
         game.Server(screen, 0)
     except socket.error:
         pass
-    game.Client(screen)
+    game.PlayerClient(screen)
 
 def quitfun(screen):
     """
@@ -69,7 +69,7 @@ def connect(screen):
     :param screen:
     :return:
     """
-    game.Client(screen)
+    game.PlayerClient(screen)
 
 
 def options(screen):
