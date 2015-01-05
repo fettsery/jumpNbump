@@ -6,7 +6,16 @@ import datas, random
 
 ZNR_PICTURE = "data/zn2r.png"
 ZN_DEAD = "data/dead.png"
-
+SCREEN_HIGHT = 450
+SCREEN_LENGTH = 610
+DIST_DIFF = 30
+MAGIC_TEN = 10
+MAGIC_FTEN = 15
+MAGIC_TWNT = 20
+MAGIC_FOUR = 4
+JUMP_SPEED = 10
+DEAD_SPEED = 5
+ACCELERATION = 0.6
 class Player(object):
     """
     player Class, checks collisions, checks state of player
@@ -29,8 +38,8 @@ class Player(object):
         self.imager = datas.load_image(ZNR_PICTURE)
         self.image = self.imager
         self.num = num
-        self.posx = random.randint(0, 650)
-        self.posy = random.randint(0, 420)
+        self.posx = random.randint(0, SCREEN_LENGTH)
+        self.posy = random.randint(MAGIC_TWNT, SCREEN_HIGHT - DIST_DIFF)
         self.dx = 0
         self.jumping = False
         self.jump_speed = 0
@@ -46,7 +55,7 @@ class Player(object):
         drawing player
         :return:
         """
-        self.screen.blit(self.image, (self.posx, self.posy - 30))
+        self.screen.blit(self.image, (self.posx, self.posy - DIST_DIFF))
 
     def move(self, action):
         """
@@ -68,7 +77,7 @@ class Player(object):
             if not self.jumping:
                 self.jump_speed = -11.4
                 self.jumping = True
-                self.jump_acceleration = 0.6
+                self.jump_acceleration = ACCELERATION
 
     def goto(self, posx, posy):
         if posx < self.posx:
@@ -95,18 +104,18 @@ class Player(object):
             self.posy += self.jump_speed
         if self.died:
             self.posy += self.jump_speed
-        if self.died and self.posy >= 450:
+        if self.died and self.posy >= SCREEN_HIGHT:
             self.died = False
-            self.posy = random.randint(0, 420)
-            self.posx = random.randint(20, 650)
+            self.posy = random.randint(0, SCREEN_HIGHT - DIST_DIFF)
+            self.posx = random.randint(MAGIC_TWNT, SCREEN_LENGTH)
             self.image = self.imager
             self.jump_speed = 0
         if self.posx < 0:
             self.posx = 0
-        if self.posx > 640:
-            self.posx = 640
-        if self.posy > 450:
-            self.posy = 450
+        if self.posx > SCREEN_LENGTH:
+            self.posx = SCREEN_LENGTH
+        if self.posy > SCREEN_HIGHT:
+            self.posy = SCREEN_HIGHT
             self.jumping = False
 
     def check_collision(self):
@@ -117,10 +126,10 @@ class Player(object):
         falling = True
         for i in self.sprites:
             if self.posx >= i.posx - i.length and self.posx <= i.posx:
-                if self.posy >= i.posy - i.high - 10 and self.posy <= i.posy - i.high + 15:
-                    if self.posx >= i.posx - i.length and self.posx <= i.posx - i.length + 10 and i.boardingleft:
+                if self.posy >= i.posy - i.high - MAGIC_TEN and self.posy <= i.posy - i.high + MAGIC_FTEN:
+                    if self.posx >= i.posx - i.length and self.posx <= i.posx - i.length + MAGIC_TEN and i.boardingleft:
                         self.onboard = True
-                    elif self.posx >= i.posx - 4 and self.posx <= i.posx and i.boardingright:
+                    elif self.posx >= i.posx - MAGIC_FOUR and self.posx <= i.posx and i.boardingright:
                         self.onboard = True
                     else:
                         self.onboard = False
@@ -131,7 +140,8 @@ class Player(object):
                         self.landed = True
                         self.posy = i.posy - i.high
         for i in self.players.values():
-            if i.posx - 30 <= self.posx <= i.posx + 30 and i.posy - 30 <= self.posy <= i.posy + 30 and i.num != self.num:
+            if i.posx - DIST_DIFF <= self.posx <= i.posx + DIST_DIFF\
+                    and i.posy - DIST_DIFF <= self.posy <= i.posy + DIST_DIFF and i.num != self.num:
                 if self.posy >= i.posy:
                     self.kill()
                     i.score += 1
@@ -140,7 +150,7 @@ class Player(object):
                     i.kill()
         if falling == True and not self.jumping and not self.landed:
             self.jumping = True
-            self.jump_speed = 5
+            self.jump_speed = DEAD_SPEED
             self.jump_acceleration = 0.6
 
     def kill(self):
@@ -149,7 +159,7 @@ class Player(object):
         :return:
         """
         self.image = datas.load_image(ZN_DEAD)
-        self.jump_speed = 10
+        self.jump_speed = JUMP_SPEED
         self.died = True
         self.send_died = True
 
