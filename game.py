@@ -36,27 +36,20 @@ class Server(object):
         initialisation
         :return:
         """
-        self.bots = list()
-        self.dest = 1
-        self.steps = 0
-        self.search = False
         self.screen = screen
         self.sock = socket.socket()
         self.sock.bind(('', PORT_NUMBER))
         self.sock.listen(7)
+        self.clock = pygame.time.Clock()
         self.players = dict()
         self.objects = list()
         create_level(self.objects, self.screen)
         self.connections = list()
-        self.clock = pygame.time.Clock()
-        self.running = True
         self.thread = threading.Thread(target=self.connection)
         self.thread.setDaemon(True)
         self.thread.start()
         self.threads = list()
-        thread = threading.Thread(target=self.main_loop)
-        thread.setDaemon(True)
-        thread.start()
+
     def retranslate(self, num, conn):
         """
         receiving commands thread
@@ -69,13 +62,6 @@ class Server(object):
                 data = conn.recv(1024)
             except:
                 self.players.pop(num)
-                try:
-                    self.bots.remove(num)
-                except ValueError:
-                    #it is not a bot
-                    pass
-                for i in self.bots:
-                    print i
                 for i in self.connections:
                     try:
                         i.send(str(num) + " quit")
@@ -84,9 +70,12 @@ class Server(object):
                 return
             j = 0
             if data:
-                if (data == "bot"):
-                    self.bots.append(num)
-                self.players[num].move(data)
+                if data == "getmynum":
+                    conn.send(str(num) + " itsyournum ")
+                    continue
+                for i in range(len(self.connections)):
+                    if i != num:
+                        self.connections[i].send(str(num) + " " + data)
 
     def connection(self):
         """
@@ -94,7 +83,7 @@ class Server(object):
         :return:
         """
         i = 0
-        while 1:
+        while True:
             conn, _ = self.sock.accept()
             self.connections.append(conn)
             self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
@@ -105,63 +94,6 @@ class Server(object):
             self.threads.append(thread)
             i += 1
 
-    def main_loop(self):
-        """
-        main game loop
-        :return:
-        """
-        while self.running:
-            self.clock.tick(30)
-            for i in self.connections:
-                for j in self.players.values():
-                    try:
-                        i.send(str(j.num) + " " + str(j.posx) + " " + str(j.posy))
-                    except:
-                        pass
-            self.bots_update()
-            for i in self.players.values():
-                i.update()
-                if i.send_died:
-                    i.send_died = False
-                    for j in self.connections:
-                        j.send(str(i.num) + " died")
-
-    def bots_update(self):
-        for i in self.bots:
-            #find nearest player
-            min = MAGIC
-            mini = 0
-            for j in self.players.keys():
-                if j != i:
-                    dist = (self.players[i].posx - self.players[j].posx) ** 2 + \
-                        (self.players[i].posy - self.players[j].posy) ** 2
-                    if dist < min:
-                        min = dist
-                        mini = j
-            if abs(self.players[i].posx - self.players[mini].posx) < 2 and not self.players[i].jumping:
-                self.search = True
-            if self.steps > 0:
-                self.steps -= 1
-                self.players[i].posx -= 3 * self.dest
-            if self.search and not self.players[i].onboard:
-                self.players[i].posx -= 3 * self.dest
-            if self.search and self.players[i].onboard:
-                self.search = False
-                self.steps = 30
-            if self.players[i].posx <= 0:
-                self.dest *= -1
-            if self.players[i].posx >= 640:
-                self.dest *= -1
-            if self.players[i].posx > self.players[mini].posx and not self.search and self.steps == 0:
-                self.players[i].posx -= 3
-            elif not self.search and self.steps == 0:
-                self.players[i].posx += 3
-            if self.players[i].posy > self.players[mini].posy:
-                if self.players[i].onboard:
-                    self.players[i].move("space")
-            if abs(self.players[i].posx - self.players[mini].posx) < 50 and \
-                abs(self.players[i].posy - self.players[mini].posy) < 50:
-                    self.players[i].move("space")
 
 class ClientInfo(object):
     """
@@ -171,7 +103,7 @@ class ClientInfo(object):
     def __init__(self, client_info):
         a = client_info.split()
         self.num = int(a[CLIENT_NUMBER_IND])
-        if a[CLIENT_INFORMATION] == "died" or a[CLIENT_INFORMATION] == "quit":
+        if a[CLIENT_INFORMATION] == "died" or a[CLIENT_INFORMATION] == "quit" or a[CLIENT_INFORMATION] == "itsyournum":
             self.command = a[CLIENT_INFORMATION]
         else:
             self.posx = float(a[CLIENT_POSX])
@@ -195,6 +127,8 @@ class Client(object):
             self.sock.connect(('localhost', PORT_NUMBER))
         except:
             return
+        #We are asking server what is our num and soon it will answer
+        self.sock.send("getmynum")
         self.objects = list()
         self.players = dict()
         self.screen = screen
@@ -220,27 +154,27 @@ class Client(object):
                 menu.Menu(pygame.display.set_mode((640, 480)))
             if data:
                 client_info = ClientInfo(data)
-
+                #Yahoo, server sent us out number!
+                if client_info.command == "itsyournum":
+                    self.player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
+                                            self.objects, self.players)
+                    self.players[client_info.num] = self.player
+                    continue
+                #Ohh, there is somebody except us!
                 try:
                     player = self.players[client_info.num]
                 except KeyError:
                     player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = player
+                #Somebody is superman!
                 if client_info.command == "died":
                     player.kill()
+                #Ohh, somebody left us:(
                 elif client_info.command == "quit":
                     self.players.pop(client_info.num)
                 else:
                     player.goto(client_info.posx, client_info.posy)
-
-    def send_info(self, action):
-        """
-        send command
-        :param action: what to send
-        :return:
-        """
-        self.sock.send(action)
 
     def draw(self):
         """
@@ -255,7 +189,12 @@ class Client(object):
             i.draw()
         for i in self.players.values():
             i.draw()
+
     def common(self):
+        """
+
+
+        """
         while self.running:
             self.clock.tick(30)
             self.draw()
@@ -286,31 +225,79 @@ class PlayerClient(Client):
         self.commonthread.start()
         while self.running:
             self.clock.tick(30)
+            self.player.update()
+            self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RIGHT:
-                        self.send_info("right")
+                        self.player.move("right")
                     if event.key == pygame.K_LEFT:
-                        self.send_info("left")
+                        self.player.move("left")
                     if event.key == pygame.K_SPACE:
-                        self.send_info("space")
+                        self.player.move("space")
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RIGHT:
-                        self.send_info("rightup")
+                        self.player.move("rightup")
                     if event.key == pygame.K_LEFT:
-                        self.send_info("leftup")
+                        self.player.move("leftup")
 
 class BotClient(Client):
     """
-    A client, that sends server information that it is a bot and it can't control itself
+    A client, that controls itself without player
     """
+    def bot_update(self):
+        #find nearest player
+        min = MAGIC
+        mini = 0
+        for j in self.players.values():
+            if j != self.player:
+                dist = (self.player.posx - j.posx) ** 2 + \
+                    (self.player.posy - j.posy) ** 2
+                if dist < min:
+                    min = dist
+                    mini = j.num
+        if abs(self.player.posx - self.players[mini].posx) < 2 and not self.player.jumping:
+            self.search = True
+        if self.steps > 0:
+            self.steps -= 1
+            self.player.posx -= 3 * self.dest
+        if self.search and not self.player.onboard:
+            self.player.posx -= 3 * self.dest
+        if self.search and self.player.onboard:
+            self.search = False
+            self.steps = 30
+        if self.player.posx <= 0:
+            self.dest *= -1
+        if self.player.posx >= 640:
+            self.dest *= -1
+        if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
+            self.player.posx -= 3
+        elif not self.search and self.steps == 0:
+            self.player.posx += 3
+        if self.player.posy > self.players[mini].posy:
+            if self.player.onboard:
+                self.player.move("space")
+        if abs(self.player.posx - self.players[mini].posx) < 50 and \
+            abs(self.player.posy - self.players[mini].posy) < 50:
+                self.player.move("space")
+
     def main_loop(self):
         """
         main game loop
         :return:
         """
-        self.send_info("bot")
-        self.common()
+        self.dest = 1
+        self.steps = 0
+        self.search = False
+        self.commonthread = threading.Thread(target=self.common)
+        self.commonthread.setDaemon(True)
+        self.commonthread.start()
+        while self.running:
+            self.clock.tick(30)
+            self.bot_update()
+            self.player.update()
+            self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
+
 
 def create_level(objects, screen):
     """
