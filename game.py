@@ -13,6 +13,8 @@ PORT_NUMBER = 9093
 ZN_PICTURE = "data/zn2.png"
 BG_PICTURE = "data/background.png"
 FONT = "data/fonts/font.ttf"
+FONT_SIZE = 10
+TICKS = 30
 CLIENT_NUMBER_IND = 0
 CLIENT_INFORMATION = 1
 CLIENT_POSX = 1
@@ -25,7 +27,23 @@ BRICK_PICTURE = "data/brick1.png"
 BRICK_BLUE_PICTURE = "data/brickblue1.png"
 CLOUD_PICTURE = "data/cloud.png"
 MAGIC = 1000000
-
+MAX_PLAYERS = 7
+RECV_PORTION = 1024
+SCREEN_HIGHT = 480
+SCREEN_LENGTH = 640
+RABBIT_SIZE = 50
+BOT_MOVING = 3
+DEFAULT_STEPS = 30
+BOARDING_LEFT_POS = 5
+BOARDING_RIGHT_POS = 6
+KILL_POS = 7
+LEFT_LEN = 6
+RIGHT_LEN = 7
+KILL_LEN = 8
+PLATFORM_POSX_POS = 1
+PLATFORM_POSY_POS = 2
+PLATFORM_LEN_POS = 3
+PLATFORM_HIG_POS = 4
 class Server(object):
     """
     Server class, getting actions messages from clients and retranslates it to other clients
@@ -39,7 +57,7 @@ class Server(object):
         self.screen = screen
         self.sock = socket.socket()
         self.sock.bind(('', PORT_NUMBER))
-        self.sock.listen(7)
+        self.sock.listen(MAX_PLAYERS)
         self.clock = pygame.time.Clock()
         self.players = dict()
         self.objects = list()
@@ -59,7 +77,7 @@ class Server(object):
         """
         while True:
             try:
-                data = conn.recv(1024)
+                data = conn.recv(RECV_PORTION)
             except:
                 self.players.pop(num)
                 for i in self.connections:
@@ -135,7 +153,7 @@ class Client(object):
         create_level(self.objects, screen)
         self.clock = pygame.time.Clock()
         self.background = datas.load_image(BG_PICTURE)
-        self.font = pygame.font.Font(os.path.realpath(FONT), 10)
+        self.font = pygame.font.Font(os.path.realpath(FONT), FONT_SIZE)
         self.running = True
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
@@ -149,9 +167,9 @@ class Client(object):
         """
         while self.connected:
             try:
-                data = self.sock.recv(1024)
+                data = self.sock.recv(RECV_PORTION)
             except:
-                menu.Menu(pygame.display.set_mode((640, 480)))
+                menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
             if data:
                 client_info = ClientInfo(data)
                 #Yahoo, server sent us out number!
@@ -196,7 +214,7 @@ class Client(object):
 
         """
         while self.running:
-            self.clock.tick(30)
+            self.clock.tick(TICKS)
             self.draw()
             try:
                 pygame.display.flip()
@@ -209,7 +227,7 @@ class Client(object):
                     if event.key == pygame.K_ESCAPE:
                         self.connected = False
                         self.sock.close()
-                        menu.Menu(pygame.display.set_mode((640, 480)))
+                        menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
 
 class PlayerClient(Client):
     """
@@ -224,7 +242,7 @@ class PlayerClient(Client):
         self.commonthread.setDaemon(True)
         self.commonthread.start()
         while self.running:
-            self.clock.tick(30)
+            self.clock.tick(TICKS)
             self.player.update()
             self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
             for event in pygame.event.get():
@@ -260,25 +278,25 @@ class BotClient(Client):
             self.search = True
         if self.steps > 0:
             self.steps -= 1
-            self.player.posx -= 3 * self.dest
+            self.player.posx -= BOT_MOVING * self.dest
         if self.search and not self.player.onboard:
-            self.player.posx -= 3 * self.dest
+            self.player.posx -= BOT_MOVING * self.dest
         if self.search and self.player.onboard:
             self.search = False
-            self.steps = 30
+            self.steps = DEFAULT_STEPS
         if self.player.posx <= 0:
             self.dest *= -1
-        if self.player.posx >= 640:
+        if self.player.posx >= SCREEN_LENGTH:
             self.dest *= -1
         if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
-            self.player.posx -= 3
+            self.player.posx -= BOT_MOVING
         elif not self.search and self.steps == 0:
-            self.player.posx += 3
+            self.player.posx += BOT_MOVING
         if self.player.posy > self.players[mini].posy:
             if self.player.onboard:
                 self.player.move("space")
-        if abs(self.player.posx - self.players[mini].posx) < 50 and \
-            abs(self.player.posy - self.players[mini].posy) < 50:
+        if abs(self.player.posx - self.players[mini].posx) < RABBIT_SIZE and \
+            abs(self.player.posy - self.players[mini].posy) < RABBIT_SIZE:
                 self.player.move("space")
 
     def main_loop(self):
@@ -293,10 +311,16 @@ class BotClient(Client):
         self.commonthread.setDaemon(True)
         self.commonthread.start()
         while self.running:
-            self.clock.tick(30)
-            self.bot_update()
+            self.clock.tick(TICKS)
+            try:
+                self.bot_update()
+            except KeyError or AttributeError:
+                pass
             self.player.update()
             self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
+            for event in pygame.event.get():
+                if event.type == pygame.KEYUP:
+                    pass
 
 
 def create_level(objects, screen):
@@ -312,17 +336,19 @@ def create_level(objects, screen):
         boardingleft = 0
         boardingright = 0
         killing = 0
-        if len(a) == 6 or len(a) == 7:
-            if int(a[5]) == 0:
+        if len(a) == LEFT_LEN or len(a) == RIGHT_LEN:
+            if int(a[BOARDING_LEFT_POS]) == 0:
                 boardingleft = False
             else:
                 boardingleft = True
-        if len(a) == 7:
-            if int(a[6]) == 0:
+        if len(a) == RIGHT_LEN:
+            if int(a[BOARDING_RIGHT_POS]) == 0:
                 boardingright = False
             else:
                 boardingright = True
-        if len(a) == 8:
-            killing = bool(a[7])
+        if len(a) == KILL_LEN:
+            killing = bool(a[KILL_POS])
         var = globals()[a[0]]
-        objects.append(sprites.Platform(screen, var, int(a[1]), int(a[2]), int(a[3]), int(a[4]), boardingleft, boardingright, killing))
+        objects.append(sprites.Platform(screen, var, int(a[PLATFORM_POSX_POS]), int(a[PLATFORM_POSY_POS]), \
+                                        int(a[PLATFORM_LEN_POS]), int(a[PLATFORM_HIG_POS]), \
+                                        boardingleft, boardingright, killing))
