@@ -6,44 +6,15 @@
 module with server and client
 """
 import pygame, os, sys, socket, threading
-import sprites, datas, menu
-import math
+import sprites, datas, menu, constants
 
-PORT_NUMBER = 9093
-ZN_PICTURE = "data/zn2.png"
-BG_PICTURE = "data/background.png"
-FONT = "data/fonts/font.ttf"
-FONT_SIZE = 10
-TICKS = 30
-CLIENT_NUMBER_IND = 0
-CLIENT_INFORMATION = 1
-CLIENT_POSX = 1
-CLIENT_POSY = 2
-LEVEL = "data/level"
 BUSH1_PICTURE = "data/bush-2.png"
 BUSH2_PICTURE = "data/bush-3.png"
 LAVA_PICTURE = "data/lava.png"
 BRICK_PICTURE = "data/brick1.png"
 BRICK_BLUE_PICTURE = "data/brickblue1.png"
 CLOUD_PICTURE = "data/cloud.png"
-MAGIC = 1000000
-MAX_PLAYERS = 7
-RECV_PORTION = 1024
-SCREEN_HIGHT = 480
-SCREEN_LENGTH = 640
-RABBIT_SIZE = 50
-BOT_MOVING = 3
-DEFAULT_STEPS = 30
-BOARDING_LEFT_POS = 5
-BOARDING_RIGHT_POS = 6
-KILL_POS = 7
-LEFT_LEN = 6
-RIGHT_LEN = 7
-KILL_LEN = 8
-PLATFORM_POSX_POS = 1
-PLATFORM_POSY_POS = 2
-PLATFORM_LEN_POS = 3
-PLATFORM_HIG_POS = 4
+
 class Server(object):
     """
     Server class, getting actions messages from clients and retranslates it to other clients
@@ -56,8 +27,8 @@ class Server(object):
         """
         self.screen = screen
         self.sock = socket.socket()
-        self.sock.bind(('', PORT_NUMBER))
-        self.sock.listen(MAX_PLAYERS)
+        self.sock.bind(('', constants.PORT_NUMBER))
+        self.sock.listen(constants.MAX_PLAYERS)
         self.clock = pygame.time.Clock()
         self.players = dict()
         self.objects = list()
@@ -77,7 +48,7 @@ class Server(object):
         """
         while True:
             try:
-                data = conn.recv(RECV_PORTION)
+                data = conn.recv(constants.RECV_PORTION)
             except:
                 self.players.pop(num)
                 for i in self.connections:
@@ -104,7 +75,7 @@ class Server(object):
         while True:
             conn, _ = self.sock.accept()
             self.connections.append(conn)
-            self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
+            self.players[i] = sprites.Player(self.screen, i, constants.ZN_PICTURE, \
                                             self.objects, self.players)
             thread = threading.Thread(target=self.retranslate, args=(i,conn,))
             thread.setDaemon(True)
@@ -120,12 +91,12 @@ class ClientInfo(object):
 
     def __init__(self, client_info):
         a = client_info.split()
-        self.num = int(a[CLIENT_NUMBER_IND])
-        if a[CLIENT_INFORMATION] == "died" or a[CLIENT_INFORMATION] == "quit" or a[CLIENT_INFORMATION] == "itsyournum":
-            self.command = a[CLIENT_INFORMATION]
+        self.num = int(a[constants.CLIENT_NUMBER_IND])
+        if a[constants.CLIENT_INFORMATION] == "died" or a[constants.CLIENT_INFORMATION] == "quit" or a[constants.CLIENT_INFORMATION] == "itsyournum":
+            self.command = a[constants.CLIENT_INFORMATION]
         else:
-            self.posx = float(a[CLIENT_POSX])
-            self.posy = float(a[CLIENT_POSY])
+            self.posx = float(a[constants.CLIENT_POSX])
+            self.posy = float(a[constants.CLIENT_POSY])
             self.command = "void"
 
 
@@ -142,7 +113,7 @@ class Client(object):
         self.connected = True
         self.sock = socket.socket()
         try:
-            self.sock.connect(('localhost', PORT_NUMBER))
+            self.sock.connect(('localhost', constants.PORT_NUMBER))
         except:
             return
         #We are asking server what is our num and soon it will answer
@@ -152,8 +123,8 @@ class Client(object):
         self.screen = screen
         create_level(self.objects, screen)
         self.clock = pygame.time.Clock()
-        self.background = datas.load_image(BG_PICTURE)
-        self.font = pygame.font.Font(os.path.realpath(FONT), FONT_SIZE)
+        self.background = datas.load_image(constants.BG_PICTURE)
+        self.font = pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT_SIZE)
         self.running = True
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
@@ -167,14 +138,14 @@ class Client(object):
         """
         while self.connected:
             try:
-                data = self.sock.recv(RECV_PORTION)
+                data = self.sock.recv(constants.RECV_PORTION)
             except:
-                menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
+                menu.Menu(pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT)))
             if data:
                 client_info = ClientInfo(data)
                 #Yahoo, server sent us out number!
                 if client_info.command == "itsyournum":
-                    self.player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
+                    self.player = sprites.Player(self.screen, client_info.num, constants.ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = self.player
                     continue
@@ -182,7 +153,7 @@ class Client(object):
                 try:
                     player = self.players[client_info.num]
                 except KeyError:
-                    player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
+                    player = sprites.Player(self.screen, client_info.num, constants.ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = player
                 #Somebody is superman!
@@ -208,13 +179,13 @@ class Client(object):
         for i in self.players.values():
             i.draw()
 
-    def common(self):
+    def main_loop(self):
         """
-
-
+        Logic that is common for every client
         """
+        self.initAdditional()
         while self.running:
-            self.clock.tick(TICKS)
+            self.clock.tick(constants.TICKS)
             self.draw()
             try:
                 pygame.display.flip()
@@ -227,45 +198,72 @@ class Client(object):
                     if event.key == pygame.K_ESCAPE:
                         self.connected = False
                         self.sock.close()
-                        menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
+                        menu.Menu(pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT)))
+                self.handler(event)
+            self.update()
+            try:
+                self.player.update()
+            except AttributeError:
+                #wait for itsyournum command
+                continue
+            try:
+                self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
+            except socket.error:
+                sys.exit()
 
 class PlayerClient(Client):
     """
     A client that is controlled by player
     """
-    def main_loop(self):
+    def initAdditional(self):
         """
-        main game loop
-        :return:
+        Initialising derive Class variables
         """
-        self.commonthread = threading.Thread(target=self.common)
-        self.commonthread.setDaemon(True)
-        self.commonthread.start()
-        while self.running:
-            self.clock.tick(TICKS)
-            self.player.update()
-            self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RIGHT:
-                        self.player.move("right")
-                    if event.key == pygame.K_LEFT:
-                        self.player.move("left")
-                    if event.key == pygame.K_SPACE:
-                        self.player.move("space")
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_RIGHT:
-                        self.player.move("rightup")
-                    if event.key == pygame.K_LEFT:
-                        self.player.move("leftup")
+        pass
+
+    def handler(self, event):
+        """
+        Handling events, that derive class should process
+        """
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                self.player.move("right")
+            if event.key == pygame.K_LEFT:
+                self.player.move("left")
+            if event.key == pygame.K_SPACE:
+                self.player.move("space")
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                self.player.move("rightup")
+            if event.key == pygame.K_LEFT:
+                self.player.move("leftup")
+
+    def update(self):
+        """
+        Do derive class logic
+        """
+        pass
+
 
 class BotClient(Client):
     """
     A client, that controls itself without player
     """
+
+    def initAdditional(self):
+        """
+        Initialising derive Class variables
+        """
+        self.dest = 1
+        self.steps = 0
+        self.search = False
+
     def bot_update(self):
+        """
+        Bot logic
+        """
         #find nearest player
-        min = MAGIC
+        min = constants.MAGIC
         mini = 0
         for j in self.players.values():
             if j != self.player:
@@ -278,50 +276,41 @@ class BotClient(Client):
             self.search = True
         if self.steps > 0:
             self.steps -= 1
-            self.player.posx -= BOT_MOVING * self.dest
+            self.player.posx -= constants.BOT_MOVING * self.dest
         if self.search and not self.player.onboard:
-            self.player.posx -= BOT_MOVING * self.dest
+            self.player.posx -= constants.BOT_MOVING * self.dest
         if self.search and self.player.onboard:
             self.search = False
-            self.steps = DEFAULT_STEPS
+            self.steps = constants.DEFAULT_STEPS
         if self.player.posx <= 0:
             self.dest *= -1
-        if self.player.posx >= SCREEN_LENGTH:
+        if self.player.posx >= constants.SCREEN_LENGTH:
             self.dest *= -1
         if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
-            self.player.posx -= BOT_MOVING
+            self.player.posx -= constants.BOT_MOVING
         elif not self.search and self.steps == 0:
-            self.player.posx += BOT_MOVING
+            self.player.posx += constants.BOT_MOVING
         if self.player.posy > self.players[mini].posy:
             if self.player.onboard:
                 self.player.move("space")
-        if abs(self.player.posx - self.players[mini].posx) < RABBIT_SIZE and \
-            abs(self.player.posy - self.players[mini].posy) < RABBIT_SIZE:
+        if abs(self.player.posx - self.players[mini].posx) < constants.RABBIT_SIZE and \
+            abs(self.player.posy - self.players[mini].posy) < constants.RABBIT_SIZE:
                 self.player.move("space")
 
-    def main_loop(self):
+    def handler(self, event):
         """
-        main game loop
-        :return:
+        Handling events, that derive class should process
         """
-        self.dest = 1
-        self.steps = 0
-        self.search = False
-        self.commonthread = threading.Thread(target=self.common)
-        self.commonthread.setDaemon(True)
-        self.commonthread.start()
-        while self.running:
-            self.clock.tick(TICKS)
-            try:
-                self.bot_update()
-            except KeyError or AttributeError:
-                pass
-            self.player.update()
-            self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
-            for event in pygame.event.get():
-                if event.type == pygame.KEYUP:
-                    pass
+        pass
 
+    def update(self):
+        """
+        Do derive class logic
+        """
+        try:
+            self.bot_update()
+        except KeyError or AttributeError:
+            pass
 
 def create_level(objects, screen):
     """
@@ -330,25 +319,25 @@ def create_level(objects, screen):
     :param: screen - main view screen
     :return:
     """
-    f = open(LEVEL)
+    f = open(constants.LEVEL)
     for line in f:
         a = line.split()
         boardingleft = 0
         boardingright = 0
         killing = 0
-        if len(a) == LEFT_LEN or len(a) == RIGHT_LEN:
-            if int(a[BOARDING_LEFT_POS]) == 0:
+        if len(a) == constants.LEFT_LEN or len(a) == constants.RIGHT_LEN:
+            if int(a[constants.BOARDING_LEFT_POS]) == 0:
                 boardingleft = False
             else:
                 boardingleft = True
-        if len(a) == RIGHT_LEN:
-            if int(a[BOARDING_RIGHT_POS]) == 0:
+        if len(a) == constants.RIGHT_LEN:
+            if int(a[constants.BOARDING_RIGHT_POS]) == 0:
                 boardingright = False
             else:
                 boardingright = True
-        if len(a) == KILL_LEN:
-            killing = bool(a[KILL_POS])
+        if len(a) == constants.KILL_LEN:
+            killing = bool(a[constants.KILL_POS])
         var = globals()[a[0]]
-        objects.append(sprites.Platform(screen, var, int(a[PLATFORM_POSX_POS]), int(a[PLATFORM_POSY_POS]), \
-                                        int(a[PLATFORM_LEN_POS]), int(a[PLATFORM_HIG_POS]), \
+        objects.append(sprites.Platform(screen, var, int(a[constants.PLATFORM_POSX_POS]), int(a[constants.PLATFORM_POSY_POS]), \
+                                        int(a[constants.PLATFORM_LEN_POS]), int(a[constants.PLATFORM_HIG_POS]), \
                                         boardingleft, boardingright, killing))

@@ -3,21 +3,8 @@
 # 2.7
 # fettser.yury
 import os, pygame, sys, socket
-import game
+import game, constants
 
-FONT = "data/fonts/font.ttf"
-SMFONT = "data/fonts/super-mario-64.ttf"
-MENU_PICTURE = "data/menu.png"
-SCREEN_HIGHT = 480
-SCREEN_LENGTH = 640
-FONT1_SIZE = 16
-FONT2_SIZE = 45
-MENU_CENTX = 300
-MENU_CENTY = 400
-TICKS = 30
-MAGIC = 320
-JNBM_MAGIC = 180
-PY_MAGIC = 235
 def rungame(screen):
     """
     running new game
@@ -49,7 +36,7 @@ def fullscreen(screen):
     """
     if screen:
         pass
-    screen = pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT), pygame.FULLSCREEN)
+    screen = pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT), pygame.FULLSCREEN)
 
 
 def normalscreen(screen):
@@ -60,7 +47,7 @@ def normalscreen(screen):
     """
     if screen:
         pass
-    screen = pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT))
+    screen = pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT))
 
 
 def returntomain(screen):
@@ -108,13 +95,13 @@ class Menu(object):
                                      ("OPTIONS", options), ("QUIT_GAME", quitfun)))
         self.menu.set_highlight_color((255, 0, 0))
         self.menu.set_normal_color((255, 255, 255))
-        self.menu.center_at(MENU_CENTX, MENU_CENTY)
-        self.menu.set_font(pygame.font.Font(os.path.realpath(FONT), FONT1_SIZE))
-        image = pygame.image.load(MENU_PICTURE)
+        self.menu.center_at(constants.MENU_CENTX, constants.MENU_CENTY)
+        self.menu.set_font(pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT1_SIZE))
+        image = pygame.image.load(constants.MENU_PICTURE)
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
         self.background = image.convert_alpha()
-        self.font = pygame.font.Font(os.path.realpath(FONT), FONT1_SIZE)
-        self.font2 = pygame.font.Font(os.path.realpath(SMFONT), FONT2_SIZE)
+        self.font = pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT1_SIZE)
+        self.font2 = pygame.font.Font(os.path.realpath(constants.SMFONT), constants.FONT2_SIZE)
         self.clock = pygame.time.Clock()
         events = pygame.event.get()
         self.menu.update(events)
@@ -127,7 +114,7 @@ class Menu(object):
         :return:
         """
         while 1:
-            self.clock.tick(TICKS)
+            self.clock.tick(constants.TICKS)
             events = pygame.event.get()
             self.menu.update(events)
             for event in events:
@@ -141,10 +128,10 @@ class Menu(object):
             self.screen.blit(self.background, (0, 0))
 
             ren = self.font2.render("JumpNbump", 1, (255, 255, 255))
-            self.screen.blit(ren, (MAGIC - ren.get_width() / 2, JNBM_MAGIC))
+            self.screen.blit(ren, (constants.MMAGIC - ren.get_width() / 2, constants.JNBM_MAGIC))
 
             ren = self.font2.render("Python", 1, (255, 255, 255))
-            self.screen.blit(ren, (MAGIC - ren.get_width() / 2, PY_MAGIC))
+            self.screen.blit(ren, (constants.MMAGIC - ren.get_width() / 2, constants.PY_MAGIC))
 
             self.menu.draw(self.screen)
             pygame.display.flip()
@@ -166,13 +153,13 @@ class MenuOptions(object):
         ("FULLSCREEN", fullscreen), ("WINDOWED MODE", normalscreen), ("RETURN", returntomain)))
         self.menuoptions.set_highlight_color((255, 0, 0))
         self.menuoptions.set_normal_color((255, 255, 255))
-        self.menuoptions.center_at(MENU_CENTX, MENU_CENTY)
-        self.menuoptions.set_font(pygame.font.Font(os.path.realpath(FONT), FONT1_SIZE))
-        image = pygame.image.load(MENU_PICTURE)
+        self.menuoptions.center_at(constants.MENU_CENTX, constants.MENU_CENTY)
+        self.menuoptions.set_font(pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT1_SIZE))
+        image = pygame.image.load(constants.MENU_PICTURE)
         image = pygame.transform.scale(image, (image.get_width() * 2, image.get_height() * 2))
         self.background = image.convert_alpha()
-        self.font = pygame.font.Font(os.path.realpath(FONT), FONT1_SIZE)
-        self.font2 = pygame.font.Font(os.path.realpath(SMFONT), FONT2_SIZE)
+        self.font = pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT1_SIZE)
+        self.font2 = pygame.font.Font(os.path.realpath(constants.SMFONT), constants.FONT2_SIZE)
         events = pygame.event.get()
         self.clock = pygame.time.Clock()
         self.menuoptions.update(events)
@@ -184,7 +171,7 @@ class MenuOptions(object):
         :return:
         """
         while 1:
-            self.clock.tick(TICKS)
+            self.clock.tick(constants.TICKS)
             events = pygame.event.get()
             self.menuoptions.update(events)
             for event in events:
@@ -198,10 +185,10 @@ class MenuOptions(object):
             self.screen.blit(self.background, (0, 0))
 
             ren = self.font2.render("JumpNbump", 1, (255, 255, 255))
-            self.screen.blit(ren, (MAGIC - ren.get_width() / 2, JNBM_MAGIC))
+            self.screen.blit(ren, (constants.MMAGIC - ren.get_width() / 2, constants.JNBM_MAGIC))
 
             ren = self.font2.render("Python", 1, (255, 255, 255))
-            self.screen.blit(ren, (MAGIC - ren.get_width() / 2, PY_MAGIC))
+            self.screen.blit(ren, (constants.MMAGIC - ren.get_width() / 2, constants.PY_MAGIC))
 
             self.menuoptions.draw(self.screen)
             pygame.display.flip()
