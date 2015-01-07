@@ -70,3 +70,13 @@ MAGIC = 1000000
 RABBIT_SIZE = 50
 BOT_MOVING = 3
 DEFAULT_STEPS = 30
+#Maximum moving in pixels during one tick
+MOVE = 3
+#Commands for moving player
+LEFT = "moveleft"
+RIGHT = "moveright"
+ON_LEFT = "left"
+ON_RIGHT = "right"
+ON_LEFT_UP = "leftup"
+ON_RIGHT_UP = "rightup"
+JUMP = "space"

@@ -227,16 +227,16 @@ class PlayerClient(Client):
         """
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                self.player.move("right")
+                self.player.move(constants.ON_RIGHT)
             if event.key == pygame.K_LEFT:
-                self.player.move("left")
+                self.player.move(constants.ON_LEFT)
             if event.key == pygame.K_SPACE:
-                self.player.move("space")
+                self.player.move(constants.JUMP)
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
-                self.player.move("rightup")
+                self.player.move(constants.ON_RIGHT_UP)
             if event.key == pygame.K_LEFT:
-                self.player.move("leftup")
+                self.player.move(constants.ON_LEFT_UP)
 
     def update(self):
         """
@@ -276,9 +276,15 @@ class BotClient(Client):
             self.search = True
         if self.steps > 0:
             self.steps -= 1
-            self.player.posx -= constants.BOT_MOVING * self.dest
+            if self.dest < 0:
+                self.player.move(constants.LEFT)
+            else:
+                self.player.move(constants.RIGHT)
         if self.search and not self.player.onboard:
-            self.player.posx -= constants.BOT_MOVING * self.dest
+            if self.dest < 0:
+                self.player.move(constants.LEFT)
+            else:
+                self.player.move(constants.RIGHT)
         if self.search and self.player.onboard:
             self.search = False
             self.steps = constants.DEFAULT_STEPS
@@ -287,15 +293,15 @@ class BotClient(Client):
         if self.player.posx >= constants.SCREEN_LENGTH:
             self.dest *= -1
         if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
-            self.player.posx -= constants.BOT_MOVING
+            self.player.move(constants.LEFT)
         elif not self.search and self.steps == 0:
-            self.player.posx += constants.BOT_MOVING
+            self.player.move(constants.RIGHT)
         if self.player.posy > self.players[mini].posy:
             if self.player.onboard:
-                self.player.move("space")
+                self.player.move(constants.JUMP)
         if abs(self.player.posx - self.players[mini].posx) < constants.RABBIT_SIZE and \
             abs(self.player.posy - self.players[mini].posy) < constants.RABBIT_SIZE:
-                self.player.move("space")
+                self.player.move(constants.JUMP)
 
     def handler(self, event):
         """

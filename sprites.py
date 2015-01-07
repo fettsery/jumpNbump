@@ -37,6 +37,14 @@ class Player(object):
         self.send_died = False
         self.score = 0
         self.onboard = False
+        self.movingactions = dict()
+        self.movingactions[constants.ON_RIGHT] = self.rightbuttonhandler
+        self.movingactions[constants.ON_LEFT] = self.leftbuttonhandler
+        self.movingactions[constants.ON_RIGHT_UP] = self.rightupbuttonhandler
+        self.movingactions[constants.ON_LEFT_UP] = self.leftupbuttonhandler
+        self.movingactions[constants.LEFT] = self.lefthandler
+        self.movingactions[constants.RIGHT] = self.righthandler
+        self.movingactions[constants.JUMP] = self.jumphandler
 
     def draw(self):
         """
@@ -45,27 +53,41 @@ class Player(object):
         """
         self.screen.blit(self.image, (self.posx, self.posy - constants.DIST_DIFF))
 
+    def rightbuttonhandler(self):
+            self.dx += constants.MOVE
+            self.image = self.imager
+
+    def leftbuttonhandler(self):
+        self.dx -= constants.MOVE
+        self.image = self.imagel
+
+    def rightupbuttonhandler(self):
+        self.dx -= constants.MOVE
+
+    def leftupbuttonhandler(self):
+        self.dx += constants.MOVE
+
+    def lefthandler(self):
+        self.posx -= constants.MOVE
+        self.image = self.imagel
+
+    def righthandler(self):
+        self.posx += constants.MOVE
+        self.image = self.imager
+
+    def jumphandler(self):
+        if not self.jumping:
+            self.jump_speed = constants.GRAVITY
+            self.jumping = True
+            self.jump_acceleration = constants.ACCELERATION
+
     def move(self, action):
         """
         moving actions
         :param action:
         :return:
         """
-        if action == "right":
-            self.dx += 3
-            self.image = self.imager
-        if action == "left":
-            self.dx -= 3
-            self.image = self.imagel
-        if action == "leftup":
-            self.dx += 3
-        if action == "rightup":
-            self.dx -= 3
-        if action == "space":
-            if not self.jumping:
-                self.jump_speed = constants.GRAVITY
-                self.jumping = True
-                self.jump_acceleration = constants.ACCELERATION
+        self.movingactions[action]()
 
     def goto(self, posx, posy):
         if posx < self.posx:
