@@ -2,7 +2,8 @@
 # coding=utf-8
 # 2.7
 # fettser.yury
-import datas, random, constants
+import datas, random
+from constants import *
 
 class Player(object):
     """
@@ -23,11 +24,11 @@ class Player(object):
         self.players = players
         self.sprites = sprites
         self.imagel = datas.load_image(image)
-        self.imager = datas.load_image(constants.ZNR_PICTURE)
+        self.imager = datas.load_image(ZNR_PICTURE)
         self.image = self.imager
         self.num = num
-        self.posx = random.randint(0, constants.LENGTH_BOUND)
-        self.posy = random.randint(constants.MAGIC_TWNT, constants.HIGH_BOUND - constants.DIST_DIFF)
+        self.posx = random.randint(0, LENGTH_BOUND)
+        self.posy = random.randint(MAGIC_TWNT, HIGH_BOUND - DIST_DIFF)
         self.dx = 0
         self.jumping = False
         self.jump_speed = 0
@@ -38,48 +39,30 @@ class Player(object):
         self.score = 0
         self.onboard = False
         self.movingactions = dict()
-        self.movingactions[constants.ON_RIGHT] = self.rightbuttonhandler
-        self.movingactions[constants.ON_LEFT] = self.leftbuttonhandler
-        self.movingactions[constants.ON_RIGHT_UP] = self.rightupbuttonhandler
-        self.movingactions[constants.ON_LEFT_UP] = self.leftupbuttonhandler
-        self.movingactions[constants.LEFT] = self.lefthandler
-        self.movingactions[constants.RIGHT] = self.righthandler
-        self.movingactions[constants.JUMP] = self.jumphandler
+        self.movingactions[LEFT] = self.lefthandler
+        self.movingactions[RIGHT] = self.righthandler
+        self.movingactions[JUMP] = self.jumphandler
 
     def draw(self):
         """
         drawing player
         :return:
         """
-        self.screen.blit(self.image, (self.posx, self.posy - constants.DIST_DIFF))
-
-    def rightbuttonhandler(self):
-            self.dx += constants.MOVE
-            self.image = self.imager
-
-    def leftbuttonhandler(self):
-        self.dx -= constants.MOVE
-        self.image = self.imagel
-
-    def rightupbuttonhandler(self):
-        self.dx -= constants.MOVE
-
-    def leftupbuttonhandler(self):
-        self.dx += constants.MOVE
+        self.screen.blit(self.image, (self.posx, self.posy - DIST_DIFF))
 
     def lefthandler(self):
-        self.posx -= constants.MOVE
+        self.posx -= MOVE
         self.image = self.imagel
 
     def righthandler(self):
-        self.posx += constants.MOVE
+        self.posx += MOVE
         self.image = self.imager
 
     def jumphandler(self):
         if not self.jumping:
-            self.jump_speed = constants.GRAVITY
+            self.jump_speed = GRAVITY
             self.jumping = True
-            self.jump_acceleration = constants.ACCELERATION
+            self.jump_acceleration = ACCELERATION
 
     def move(self, action):
         """
@@ -114,18 +97,18 @@ class Player(object):
             self.posy += self.jump_speed
         if self.died:
             self.posy += self.jump_speed
-        if self.died and self.posy >= constants.HIGH_BOUND:
+        if self.died and self.posy >= HIGH_BOUND:
             self.died = False
-            self.posy = random.randint(0, constants.HIGH_BOUND - constants.DIST_DIFF)
-            self.posx = random.randint(constants.MAGIC_TWNT, constants.LENGTH_BOUND)
+            self.posy = random.randint(0, HIGH_BOUND - DIST_DIFF)
+            self.posx = random.randint(MAGIC_TWNT, LENGTH_BOUND)
             self.image = self.imager
             self.jump_speed = 0
         if self.posx < 0:
             self.posx = 0
-        if self.posx > constants.LENGTH_BOUND:
-            self.posx = constants.LENGTH_BOUND
-        if self.posy > constants.HIGH_BOUND:
-            self.posy = constants.HIGH_BOUND
+        if self.posx > LENGTH_BOUND:
+            self.posx = LENGTH_BOUND
+        if self.posy > HIGH_BOUND:
+            self.posy = HIGH_BOUND
             self.jumping = False
 
     def check_collision(self):
@@ -136,10 +119,10 @@ class Player(object):
         falling = True
         for i in self.sprites:
             if self.posx >= i.posx - i.length and self.posx <= i.posx:
-                if self.posy >= i.posy - i.high - constants.MAGIC_TEN and self.posy <= i.posy - i.high + constants.MAGIC_FTEN:
-                    if self.posx >= i.posx - i.length and self.posx <= i.posx - i.length + constants.MAGIC_TEN and i.boardingleft:
+                if self.posy >= i.posy - i.high - MAGIC_TEN and self.posy <= i.posy - i.high + MAGIC_FTEN:
+                    if self.posx >= i.posx - i.length and self.posx <= i.posx - i.length + MAGIC_TEN and i.boardingleft:
                         self.onboard = True
-                    elif self.posx >= i.posx - constants.MAGIC_FOUR and self.posx <= i.posx and i.boardingright:
+                    elif self.posx >= i.posx - MAGIC_FOUR and self.posx <= i.posx and i.boardingright:
                         self.onboard = True
                     else:
                         self.onboard = False
@@ -150,8 +133,8 @@ class Player(object):
                         self.landed = True
                         self.posy = i.posy - i.high
         for i in self.players.values():
-            if i.posx - constants.DIST_DIFF <= self.posx <= i.posx + constants.DIST_DIFF\
-                    and i.posy - constants.DIST_DIFF <= self.posy <= i.posy + constants.DIST_DIFF and i.num != self.num:
+            if i.posx - DIST_DIFF <= self.posx <= i.posx + DIST_DIFF\
+                    and i.posy - DIST_DIFF <= self.posy <= i.posy + DIST_DIFF and i.num != self.num:
                 if self.posy >= i.posy:
                     self.kill()
                     i.score += 1
@@ -160,7 +143,7 @@ class Player(object):
                     i.kill()
         if falling == True and not self.jumping and not self.landed:
             self.jumping = True
-            self.jump_speed = constants.DEAD_SPEED
+            self.jump_speed = DEAD_SPEED
             self.jump_acceleration = 0.6
 
     def kill(self):
@@ -168,8 +151,8 @@ class Player(object):
         kill player
         :return:
         """
-        self.image = datas.load_image(constants.ZN_DEAD)
-        self.jump_speed = constants.JUMP_SPEED
+        self.image = datas.load_image(ZN_DEAD)
+        self.jump_speed = JUMP_SPEED
         self.died = True
         self.send_died = True
 

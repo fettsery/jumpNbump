@@ -80,3 +80,8 @@ ON_RIGHT = "right"
 ON_LEFT_UP = "leftup"
 ON_RIGHT_UP = "rightup"
 JUMP = "space"
+#Server-Client communication commands
+QUIT_COMMAND = "quit"
+ITSYOURNUM_COMMAND = "itsyournum"
+GETMYNUM_COMMAND = "getmynum"
+VOID_COMMAND = "void"

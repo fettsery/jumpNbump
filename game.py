@@ -6,7 +6,8 @@
 module with server and client
 """
 import pygame, os, sys, socket, threading
-import sprites, datas, menu, constants
+import sprites, datas, menu
+from constants import *
 
 BUSH1_PICTURE = "data/bush-2.png"
 BUSH2_PICTURE = "data/bush-3.png"
@@ -27,8 +28,8 @@ class Server(object):
         """
         self.screen = screen
         self.sock = socket.socket()
-        self.sock.bind(('', constants.PORT_NUMBER))
-        self.sock.listen(constants.MAX_PLAYERS)
+        self.sock.bind(('', PORT_NUMBER))
+        self.sock.listen(MAX_PLAYERS)
         self.clock = pygame.time.Clock()
         self.players = dict()
         self.objects = list()
@@ -48,19 +49,19 @@ class Server(object):
         """
         while True:
             try:
-                data = conn.recv(constants.RECV_PORTION)
+                data = conn.recv(RECV_PORTION)
             except:
                 self.players.pop(num)
                 for i in self.connections:
                     try:
-                        i.send(str(num) + " quit")
+                        i.send(str(num) + " " + QUIT_COMMAND)
                     except:
                         self.connections.remove(i)
                 return
             j = 0
             if data:
-                if data == "getmynum":
-                    conn.send(str(num) + " itsyournum ")
+                if data == GETMYNUM_COMMAND:
+                    conn.send(str(num) + " " +ITSYOURNUM_COMMAND+ " ")
                     continue
                 for i in range(len(self.connections)):
                     if i != num:
@@ -75,7 +76,7 @@ class Server(object):
         while True:
             conn, _ = self.sock.accept()
             self.connections.append(conn)
-            self.players[i] = sprites.Player(self.screen, i, constants.ZN_PICTURE, \
+            self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
                                             self.objects, self.players)
             thread = threading.Thread(target=self.retranslate, args=(i,conn,))
             thread.setDaemon(True)
@@ -83,6 +84,13 @@ class Server(object):
             self.threads.append(thread)
             i += 1
 
+class Controller(object):
+    def __init__(self):
+        self.keydown = pygame.KEYDOWN
+        self.keyup = pygame.KEYUP
+        self.leftbutton = pygame.K_LEFT
+        self.rightbutton = pygame.K_RIGHT
+        self.jumpbutton = pygame.K_SPACE
 
 class ClientInfo(object):
     """
@@ -91,13 +99,13 @@ class ClientInfo(object):
 
     def __init__(self, client_info):
         a = client_info.split()
-        self.num = int(a[constants.CLIENT_NUMBER_IND])
-        if a[constants.CLIENT_INFORMATION] == "died" or a[constants.CLIENT_INFORMATION] == "quit" or a[constants.CLIENT_INFORMATION] == "itsyournum":
-            self.command = a[constants.CLIENT_INFORMATION]
+        self.num = int(a[CLIENT_NUMBER_IND])
+        if a[CLIENT_INFORMATION] == QUIT_COMMAND or a[CLIENT_INFORMATION] == ITSYOURNUM_COMMAND:
+            self.command = a[CLIENT_INFORMATION]
         else:
-            self.posx = float(a[constants.CLIENT_POSX])
-            self.posy = float(a[constants.CLIENT_POSY])
-            self.command = "void"
+            self.posx = float(a[CLIENT_POSX])
+            self.posy = float(a[CLIENT_POSY])
+            self.command = VOID_COMMAND
 
 
 class Client(object):
@@ -113,18 +121,18 @@ class Client(object):
         self.connected = True
         self.sock = socket.socket()
         try:
-            self.sock.connect(('localhost', constants.PORT_NUMBER))
+            self.sock.connect(('localhost', PORT_NUMBER))
         except:
             return
         #We are asking server what is our num and soon it will answer
-        self.sock.send("getmynum")
+        self.sock.send(GETMYNUM_COMMAND)
         self.objects = list()
         self.players = dict()
         self.screen = screen
         create_level(self.objects, screen)
         self.clock = pygame.time.Clock()
-        self.background = datas.load_image(constants.BG_PICTURE)
-        self.font = pygame.font.Font(os.path.realpath(constants.FONT), constants.FONT_SIZE)
+        self.background = datas.load_image(BG_PICTURE)
+        self.font = pygame.font.Font(os.path.realpath(FONT), FONT_SIZE)
         self.running = True
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
@@ -138,14 +146,14 @@ class Client(object):
         """
         while self.connected:
             try:
-                data = self.sock.recv(constants.RECV_PORTION)
+                data = self.sock.recv(RECV_PORTION)
             except:
-                menu.Menu(pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT)))
+                menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
             if data:
                 client_info = ClientInfo(data)
                 #Yahoo, server sent us out number!
-                if client_info.command == "itsyournum":
-                    self.player = sprites.Player(self.screen, client_info.num, constants.ZN_PICTURE, \
+                if client_info.command == ITSYOURNUM_COMMAND:
+                    self.player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = self.player
                     continue
@@ -153,14 +161,11 @@ class Client(object):
                 try:
                     player = self.players[client_info.num]
                 except KeyError:
-                    player = sprites.Player(self.screen, client_info.num, constants.ZN_PICTURE, \
+                    player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = player
-                #Somebody is superman!
-                if client_info.command == "died":
-                    player.kill()
                 #Ohh, somebody left us:(
-                elif client_info.command == "quit":
+                if client_info.command == QUIT_COMMAND:
                     self.players.pop(client_info.num)
                 else:
                     player.goto(client_info.posx, client_info.posy)
@@ -185,7 +190,7 @@ class Client(object):
         """
         self.initAdditional()
         while self.running:
-            self.clock.tick(constants.TICKS)
+            self.clock.tick(TICKS)
             self.draw()
             try:
                 pygame.display.flip()
@@ -198,7 +203,7 @@ class Client(object):
                     if event.key == pygame.K_ESCAPE:
                         self.connected = False
                         self.sock.close()
-                        menu.Menu(pygame.display.set_mode((constants.SCREEN_LENGTH, constants.SCREEN_HIGHT)))
+                        menu.Menu(pygame.display.set_mode((SCREEN_LENGTH, SCREEN_HIGHT)))
                 self.handler(event)
             self.update()
             try:
@@ -219,29 +224,36 @@ class PlayerClient(Client):
         """
         Initialising derive Class variables
         """
+        self.controller = Controller()
+        self.movingright = False
+        self.movingleft = False
         pass
 
     def handler(self, event):
         """
         Handling events, that derive class should process
         """
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                self.player.move(constants.ON_RIGHT)
-            if event.key == pygame.K_LEFT:
-                self.player.move(constants.ON_LEFT)
-            if event.key == pygame.K_SPACE:
-                self.player.move(constants.JUMP)
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_RIGHT:
-                self.player.move(constants.ON_RIGHT_UP)
-            if event.key == pygame.K_LEFT:
-                self.player.move(constants.ON_LEFT_UP)
+        if event.type == self.controller.keydown:
+            if event.key == self.controller.rightbutton:
+                self.movingright = True
+            if event.key == self.controller.leftbutton:
+                self.movingleft = True
+            if event.key == self.controller.jumpbutton:
+                self.player.move(JUMP)
+        if event.type == self.controller.keyup:
+            if event.key == self.controller.rightbutton:
+                self.movingright = False
+            if event.key == self.controller.leftbutton:
+                self.movingleft = False
 
     def update(self):
         """
         Do derive class logic
         """
+        if self.movingright:
+            self.player.move(RIGHT)
+        if self.movingleft:
+            self.player.move(LEFT)
         pass
 
 
@@ -263,7 +275,7 @@ class BotClient(Client):
         Bot logic
         """
         #find nearest player
-        min = constants.MAGIC
+        min = MAGIC
         mini = 0
         for j in self.players.values():
             if j != self.player:
@@ -277,31 +289,31 @@ class BotClient(Client):
         if self.steps > 0:
             self.steps -= 1
             if self.dest < 0:
-                self.player.move(constants.LEFT)
+                self.player.move(LEFT)
             else:
-                self.player.move(constants.RIGHT)
+                self.player.move(RIGHT)
         if self.search and not self.player.onboard:
             if self.dest < 0:
-                self.player.move(constants.LEFT)
+                self.player.move(LEFT)
             else:
-                self.player.move(constants.RIGHT)
+                self.player.move(RIGHT)
         if self.search and self.player.onboard:
             self.search = False
-            self.steps = constants.DEFAULT_STEPS
+            self.steps = DEFAULT_STEPS
         if self.player.posx <= 0:
             self.dest *= -1
-        if self.player.posx >= constants.SCREEN_LENGTH:
+        if self.player.posx >= SCREEN_LENGTH:
             self.dest *= -1
         if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
-            self.player.move(constants.LEFT)
+            self.player.move(LEFT)
         elif not self.search and self.steps == 0:
-            self.player.move(constants.RIGHT)
+            self.player.move(RIGHT)
         if self.player.posy > self.players[mini].posy:
             if self.player.onboard:
-                self.player.move(constants.JUMP)
-        if abs(self.player.posx - self.players[mini].posx) < constants.RABBIT_SIZE and \
-            abs(self.player.posy - self.players[mini].posy) < constants.RABBIT_SIZE:
-                self.player.move(constants.JUMP)
+                self.player.move(JUMP)
+        if abs(self.player.posx - self.players[mini].posx) < RABBIT_SIZE and \
+            abs(self.player.posy - self.players[mini].posy) < RABBIT_SIZE:
+                self.player.move(JUMP)
 
     def handler(self, event):
         """
@@ -325,25 +337,25 @@ def create_level(objects, screen):
     :param: screen - main view screen
     :return:
     """
-    f = open(constants.LEVEL)
+    f = open(LEVEL)
     for line in f:
         a = line.split()
         boardingleft = 0
         boardingright = 0
         killing = 0
-        if len(a) == constants.LEFT_LEN or len(a) == constants.RIGHT_LEN:
-            if int(a[constants.BOARDING_LEFT_POS]) == 0:
+        if len(a) == LEFT_LEN or len(a) == RIGHT_LEN:
+            if int(a[BOARDING_LEFT_POS]) == 0:
                 boardingleft = False
             else:
                 boardingleft = True
-        if len(a) == constants.RIGHT_LEN:
-            if int(a[constants.BOARDING_RIGHT_POS]) == 0:
+        if len(a) == RIGHT_LEN:
+            if int(a[BOARDING_RIGHT_POS]) == 0:
                 boardingright = False
             else:
                 boardingright = True
-        if len(a) == constants.KILL_LEN:
-            killing = bool(a[constants.KILL_POS])
+        if len(a) == KILL_LEN:
+            killing = bool(a[KILL_POS])
         var = globals()[a[0]]
-        objects.append(sprites.Platform(screen, var, int(a[constants.PLATFORM_POSX_POS]), int(a[constants.PLATFORM_POSY_POS]), \
-                                        int(a[constants.PLATFORM_LEN_POS]), int(a[constants.PLATFORM_HIG_POS]), \
+        objects.append(sprites.Platform(screen, var, int(a[PLATFORM_POSX_POS]), int(a[PLATFORM_POSY_POS]), \
+                                        int(a[PLATFORM_LEN_POS]), int(a[PLATFORM_HIG_POS]), \
                                         boardingleft, boardingright, killing))
