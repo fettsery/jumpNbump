@@ -132,15 +132,6 @@ class Player(object):
                     if self.jumping and self.jump_speed > 0 and not self.died:
                         self.landed = True
                         self.posy = i.posy - i.high
-        for i in self.players.values():
-            if i.posx - DIST_DIFF <= self.posx <= i.posx + DIST_DIFF\
-                    and i.posy - DIST_DIFF <= self.posy <= i.posy + DIST_DIFF and i.num != self.num:
-                if self.posy >= i.posy:
-                    self.kill()
-                    i.score += 1
-                else:
-                    self.score += 1
-                    i.kill()
         if falling == True and not self.jumping and not self.landed:
             self.jumping = True
             self.jump_speed = DEAD_SPEED

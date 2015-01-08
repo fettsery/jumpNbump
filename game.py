@@ -39,6 +39,9 @@ class Server(object):
         self.thread.setDaemon(True)
         self.thread.start()
         self.threads = list()
+        main = threading.Thread(target=self.main_loop)
+        main.setDaemon(True)
+        main.start()
 
     def retranslate(self, num, conn):
         """
@@ -63,6 +66,8 @@ class Server(object):
                 if data == GETMYNUM_COMMAND:
                     conn.send(str(num) + " " +ITSYOURNUM_COMMAND+ " ")
                     continue
+                a = data.split()
+                self.players[num].goto(float(a[0]), float(a[1]))
                 for i in range(len(self.connections)):
                     if i != num:
                         self.connections[i].send(str(num) + " " + data)
@@ -84,6 +89,20 @@ class Server(object):
             self.threads.append(thread)
             i += 1
 
+    def main_loop(self):
+        while True:
+            for i in range(len(self.players) - 1):
+                for j in range(i, len(self.players)):
+                    if self.players[j].posx - DIST_DIFF <= self.players[i].posx <= self.players[j].posx + DIST_DIFF\
+                            and self.players[j].posy - DIST_DIFF <= self.players[i].posy \
+                                    <= self.players[j].posy + DIST_DIFF and self.players[j].num != self.players[i].num:
+                        if self.players[i].posy >= self.players[j].posy:
+                            for k in self.connections:
+                                k.send(str(self.players[i].num) + " " + DIED_COMMAND +" ")
+                        else:
+                            for k in self.connections:
+                                k.send(str(self.players[j].num) + " " + DIED_COMMAND +" ")
+
 class Controller(object):
     def __init__(self):
         self.keydown = pygame.KEYDOWN
@@ -100,7 +119,8 @@ class ClientInfo(object):
     def __init__(self, client_info):
         a = client_info.split()
         self.num = int(a[CLIENT_NUMBER_IND])
-        if a[CLIENT_INFORMATION] == QUIT_COMMAND or a[CLIENT_INFORMATION] == ITSYOURNUM_COMMAND:
+        if a[CLIENT_INFORMATION] == DIED_COMMAND \
+                or a[CLIENT_INFORMATION] == QUIT_COMMAND or a[CLIENT_INFORMATION] == ITSYOURNUM_COMMAND:
             self.command = a[CLIENT_INFORMATION]
         else:
             self.posx = float(a[CLIENT_POSX])
@@ -164,6 +184,10 @@ class Client(object):
                     player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects, self.players)
                     self.players[client_info.num] = player
+                #Somebody is superman!
+                if client_info.command == DIED_COMMAND:
+                    player.kill()
+                    continue
                 #Ohh, somebody left us:(
                 if client_info.command == QUIT_COMMAND:
                     self.players.pop(client_info.num)
@@ -250,10 +274,13 @@ class PlayerClient(Client):
         """
         Do derive class logic
         """
-        if self.movingright:
-            self.player.move(RIGHT)
-        if self.movingleft:
-            self.player.move(LEFT)
+        try:
+            if self.movingright:
+                self.player.move(RIGHT)
+            if self.movingleft:
+                self.player.move(LEFT)
+        except AttributeError:
+            pass
         pass
 
 
@@ -327,7 +354,9 @@ class BotClient(Client):
         """
         try:
             self.bot_update()
-        except KeyError or AttributeError:
+        except KeyError:
+            pass
+        except AttributeError:
             pass
 
 def create_level(objects, screen):
