@@ -82,7 +82,7 @@ class Server(object):
             conn, _ = self.sock.accept()
             self.connections.append(conn)
             self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
-                                            self.objects, self.players)
+                                            self.objects)
             thread = threading.Thread(target=self.retranslate, args=(i,conn,))
             thread.setDaemon(True)
             thread.start()
@@ -174,7 +174,7 @@ class Client(object):
                 #Yahoo, server sent us out number!
                 if client_info.command == ITSYOURNUM_COMMAND:
                     self.player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
-                                            self.objects, self.players)
+                                            self.objects)
                     self.players[client_info.num] = self.player
                     continue
                 #Ohh, there is somebody except us!
@@ -182,7 +182,7 @@ class Client(object):
                     player = self.players[client_info.num]
                 except KeyError:
                     player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
-                                            self.objects, self.players)
+                                            self.objects)
                     self.players[client_info.num] = player
                 #Somebody is superman!
                 if client_info.command == DIED_COMMAND:

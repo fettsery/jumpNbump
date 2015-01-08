@@ -10,7 +10,7 @@ class Player(object):
     player Class, checks collisions, checks state of player
     """
 
-    def __init__(self, screen, num, image, sprites, players):
+    def __init__(self, screen, num, image, sprites):
         """
         initialising
         :param screen: main view screen
@@ -21,7 +21,6 @@ class Player(object):
         :return:
         """
         self.screen = screen
-        self.players = players
         self.sprites = sprites
         self.imagel = datas.load_image(image)
         self.imager = datas.load_image(ZNR_PICTURE)
