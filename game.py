@@ -54,7 +54,8 @@ class Server(object):
             try:
                 data = conn.recv(RECV_PORTION)
             except:
-                self.players.pop(num)
+                #self.players.pop(num)
+                self.players[num].active = False
                 for i in self.connections:
                     try:
                         i.send(str(num) + " " + QUIT_COMMAND)
@@ -83,6 +84,7 @@ class Server(object):
             self.connections.append(conn)
             self.players[i] = sprites.Player(self.screen, i, ZN_PICTURE, \
                                             self.objects)
+            self.players[i].active = True
             thread = threading.Thread(target=self.retranslate, args=(i,conn,))
             thread.setDaemon(True)
             thread.start()
@@ -90,18 +92,25 @@ class Server(object):
             i += 1
 
     def main_loop(self):
+        """
+        Players bumping logic
+        """
         while True:
             for i in range(len(self.players) - 1):
                 for j in range(i, len(self.players)):
-                    if self.players[j].posx - DIST_DIFF <= self.players[i].posx <= self.players[j].posx + DIST_DIFF\
-                            and self.players[j].posy - DIST_DIFF <= self.players[i].posy \
-                                    <= self.players[j].posy + DIST_DIFF and self.players[j].num != self.players[i].num:
-                        if self.players[i].posy >= self.players[j].posy:
-                            for k in self.connections:
-                                k.send(str(self.players[i].num) + " " + DIED_COMMAND +" ")
-                        else:
-                            for k in self.connections:
-                                k.send(str(self.players[j].num) + " " + DIED_COMMAND +" ")
+                    if self.players[i].active and self.players[j].active:
+                        try:
+                            if self.players[j].getposx() - DIST_DIFF <= self.players[i].getposx() <= self.players[j].getposx() + DIST_DIFF\
+                                    and self.players[j].getposy() - DIST_DIFF <= self.players[i].getposy() \
+                                            <= self.players[j].getposy() + DIST_DIFF and self.players[j].num != self.players[i].num:
+                                if self.players[i].getposy() >= self.players[j].getposy():
+                                    for k in self.connections:
+                                        k.send(str(self.players[i].num) + " " + DIED_COMMAND +" ")
+                                else:
+                                    for k in self.connections:
+                                        k.send(str(self.players[j].num) + " " + DIED_COMMAND +" ")
+                        except KeyError:
+                            pass
 
 class Controller(object):
     def __init__(self):
@@ -150,10 +159,11 @@ class Client(object):
         self.players = dict()
         self.screen = screen
         create_level(self.objects, screen)
+        self.player = sprites.Player(self.screen, 0, ZN_PICTURE, \
+                        self.objects)
         self.clock = pygame.time.Clock()
-        self.background = datas.load_image(BG_PICTURE)
-        self.font = pygame.font.Font(os.path.realpath(FONT), FONT_SIZE)
         self.running = True
+        self.clientview = ClientView(screen, self.objects, self.players)
         self.thread = threading.Thread(target=self.getdata)
         self.thread.setDaemon(True)
         self.thread.start()
@@ -173,13 +183,14 @@ class Client(object):
                 client_info = ClientInfo(data)
                 #Yahoo, server sent us out number!
                 if client_info.command == ITSYOURNUM_COMMAND:
-                    self.player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
-                                            self.objects)
+                    self.player.num = client_info.num
                     self.players[client_info.num] = self.player
+                    self.player.active = True
                     continue
                 #Ohh, there is somebody except us!
                 try:
                     player = self.players[client_info.num]
+                    self.players[client_info.num].active = True
                 except KeyError:
                     player = sprites.Player(self.screen, client_info.num, ZN_PICTURE, \
                                             self.objects)
@@ -190,23 +201,9 @@ class Client(object):
                     continue
                 #Ohh, somebody left us:(
                 if client_info.command == QUIT_COMMAND:
-                    self.players.pop(client_info.num)
+                    self.players[client_info.num].active = False
                 else:
                     player.goto(client_info.posx, client_info.posy)
-
-    def draw(self):
-        """
-        draw everything
-        :return:
-        """
-        try:
-            self.screen.blit(self.background, (0, 0))
-        except:
-            sys.exit()
-        for i in self.objects:
-            i.draw()
-        for i in self.players.values():
-            i.draw()
 
     def main_loop(self):
         """
@@ -215,7 +212,7 @@ class Client(object):
         self.initAdditional()
         while self.running:
             self.clock.tick(TICKS)
-            self.draw()
+            self.clientview.draw()
             try:
                 pygame.display.flip()
             except:
@@ -236,9 +233,35 @@ class Client(object):
                 #wait for itsyournum command
                 continue
             try:
-                self.sock.send(str(self.player.posx) + " " + str(self.player.posy))
+                if self.player.active:
+                    self.sock.send(str(self.player.getposx()) + " " + str(self.player.getposy()))
             except socket.error:
                 sys.exit()
+
+class ClientView(object):
+    """
+    Class for drawing
+    """
+    def __init__(self, screen, objects, players):
+        self.screen = screen
+        self.objects = objects
+        self.players = players
+        self.background = datas.load_image(BG_PICTURE)
+        pass
+
+    def draw(self):
+        """
+        draw everything
+        :return:
+        """
+        try:
+            self.screen.blit(self.background, (0, 0))
+        except:
+            sys.exit()
+        for i in self.objects:
+            i.draw()
+        for i in self.players.values():
+            i.playerview.draw()
 
 class PlayerClient(Client):
     """
@@ -249,8 +272,6 @@ class PlayerClient(Client):
         Initialising derive Class variables
         """
         self.controller = Controller()
-        self.movingright = False
-        self.movingleft = False
         pass
 
     def handler(self, event):
@@ -259,28 +280,21 @@ class PlayerClient(Client):
         """
         if event.type == self.controller.keydown:
             if event.key == self.controller.rightbutton:
-                self.movingright = True
+                self.player.movingright = True
             if event.key == self.controller.leftbutton:
-                self.movingleft = True
+                self.player.movingleft = True
             if event.key == self.controller.jumpbutton:
                 self.player.move(JUMP)
         if event.type == self.controller.keyup:
             if event.key == self.controller.rightbutton:
-                self.movingright = False
+                self.player.movingright = False
             if event.key == self.controller.leftbutton:
-                self.movingleft = False
+                self.player.movingleft = False
 
     def update(self):
         """
         Do derive class logic
         """
-        try:
-            if self.movingright:
-                self.player.move(RIGHT)
-            if self.movingleft:
-                self.player.move(LEFT)
-        except AttributeError:
-            pass
         pass
 
 
@@ -293,54 +307,7 @@ class BotClient(Client):
         """
         Initialising derive Class variables
         """
-        self.dest = 1
-        self.steps = 0
-        self.search = False
-
-    def bot_update(self):
-        """
-        Bot logic
-        """
-        #find nearest player
-        min = MAGIC
-        mini = 0
-        for j in self.players.values():
-            if j != self.player:
-                dist = (self.player.posx - j.posx) ** 2 + \
-                    (self.player.posy - j.posy) ** 2
-                if dist < min:
-                    min = dist
-                    mini = j.num
-        if abs(self.player.posx - self.players[mini].posx) < 2 and not self.player.jumping:
-            self.search = True
-        if self.steps > 0:
-            self.steps -= 1
-            if self.dest < 0:
-                self.player.move(LEFT)
-            else:
-                self.player.move(RIGHT)
-        if self.search and not self.player.onboard:
-            if self.dest < 0:
-                self.player.move(LEFT)
-            else:
-                self.player.move(RIGHT)
-        if self.search and self.player.onboard:
-            self.search = False
-            self.steps = DEFAULT_STEPS
-        if self.player.posx <= 0:
-            self.dest *= -1
-        if self.player.posx >= SCREEN_LENGTH:
-            self.dest *= -1
-        if self.player.posx > self.players[mini].posx and not self.search and self.steps == 0:
-            self.player.move(LEFT)
-        elif not self.search and self.steps == 0:
-            self.player.move(RIGHT)
-        if self.player.posy > self.players[mini].posy:
-            if self.player.onboard:
-                self.player.move(JUMP)
-        if abs(self.player.posx - self.players[mini].posx) < RABBIT_SIZE and \
-            abs(self.player.posy - self.players[mini].posy) < RABBIT_SIZE:
-                self.player.move(JUMP)
+        self.bot = sprites.Bot(self.player, self.players)
 
     def handler(self, event):
         """
@@ -353,7 +320,7 @@ class BotClient(Client):
         Do derive class logic
         """
         try:
-            self.bot_update()
+            self.bot.update()
         except KeyError:
             pass
         except AttributeError:
